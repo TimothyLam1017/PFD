@@ -1,0 +1,46 @@
+[package]
+name = "audio-player"
+version = "0.1.0"
+authors = ["audio-player contributors"]
+edition = "2021"
+rust-version = "1.87"
+description = "A lightweight native music player built with eframe/egui and rodio"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+# GUI — native only (glow renderer), no webview. Features mirror eframe_template
+# minus wasm/persistence (config is stored by us under `dirs::config_dir()`).
+eframe = { version = "0.31", default-features = false, features = [
+    "default_fonts", # Embed the default egui fonts (Latin + emoji/icons).
+    "glow",          # Use the glow (OpenGL) rendering backend.
+    "wayland",       # Linux: Wayland support.
+    "x11",           # Linux: X11 support.
+] }
+egui_extras = { version = "0.31", default-features = false }
+
+# Audio playback. `symphonia-all` enables every symphonia format + codec:
+# mp3, flac, wav, aac/m4a (isomp4), ogg/vorbis, alac, aiff, mkv, ...
+# 0.22 is used because the 0.20 symphonia backend mis-reports durations and
+# fails on ogg/m4a/flac-seek; 0.21+ rewrote it.
+rodio = { version = "0.22", default-features = false, features = ["playback", "symphonia-all"] }
+
+# Tag / metadata reading (ID3v1/v2, Vorbis comments, MP4 atoms, APE, ...).
+lofty = "0.22"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rfd = "0.15"
+dirs = "6"
+log = "0.4"
+env_logger = { version = "0.11", default-features = false, features = ["auto-color", "humantime"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true
+
+# Optimize all dependencies even in debug builds — audio decoding in an
+# unoptimized debug build can stutter otherwise.
+[profile.dev.package."*"]
+opt-level = 2
