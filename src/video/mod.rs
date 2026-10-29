@@ -10,9 +10,10 @@
 //! * Fullscreen: a borderless, topmost window that shows nothing but the picture
 //!   (no title, timeline, subtitles or cursor). Double-click leaves fullscreen.
 //!
-//! On other platforms the same API exists but every video reports an error.
+//! On Linux and macOS, the same API is backed by system **libmpv** (dynloaded) when the
+//! `video-mpv` feature is enabled (default on non-Windows). Without libmpv installed, or
+//! with `--no-default-features`, opens report a clear error. Windows stays on Media Foundation.
 
-// The non-Windows stub never reads most of these.
 #![cfg_attr(not(windows), allow(dead_code))]
 
 use std::path::{Path, PathBuf};
@@ -25,15 +26,19 @@ use std::time::{Duration, Instant};
 use eframe::egui::{self, ColorImage};
 use serde::{Deserialize, Serialize};
 
-#[cfg(not(windows))]
-mod stub;
 #[cfg(windows)]
 mod win;
+#[cfg(all(not(windows), feature = "video-mpv"))]
+mod mpv_ffi;
+#[cfg(all(not(windows), feature = "video-mpv"))]
+mod mpv;
+#[cfg(all(not(windows), not(feature = "video-mpv")))]
+mod stub;
 
-/// Video playback is only implemented for Windows (Media Foundation).
-pub const AVAILABLE: bool = cfg!(windows);
+/// Video playback: Windows Media Foundation, or libmpv on Linux/macOS (`video-mpv` feature).
+pub const AVAILABLE: bool = cfg!(windows) || cfg!(all(not(windows), feature = "video-mpv"));
 
-/// File types handed to the video engine (on Windows).
+/// File types handed to the video engine.
 pub const VIDEO_EXTENSIONS: &[&str] = &[
     "mp4", "m4v", "mov", "mkv", "wmv", "asf", "avi", "webm", "ts", "m2ts", "mts", "mpg", "mpeg",
     "3gp", "3g2",
@@ -230,7 +235,9 @@ impl Video {
             .spawn(move || {
                 #[cfg(windows)]
                 win::run(rx, thread_shared, ctx);
-                #[cfg(not(windows))]
+                #[cfg(all(not(windows), feature = "video-mpv"))]
+                mpv::run(rx, thread_shared, ctx);
+                #[cfg(all(not(windows), not(feature = "video-mpv")))]
                 stub::run(rx, thread_shared, ctx);
             })
             .expect("failed to spawn video thread");
@@ -409,7 +416,11 @@ pub fn monitors() -> Vec<String> {
             })
             .collect()
     }
-    #[cfg(not(windows))]
+    #[cfg(all(not(windows), feature = "video-mpv"))]
+    {
+        mpv::monitors()
+    }
+    #[cfg(all(not(windows), not(feature = "video-mpv")))]
     {
         Vec::new()
     }
@@ -551,7 +562,11 @@ fn private_memory_mb() -> Option<u64> {
     {
         win::private_memory_mb()
     }
-    #[cfg(not(windows))]
+    #[cfg(all(not(windows), feature = "video-mpv"))]
+    {
+        mpv::private_memory_mb()
+    }
+    #[cfg(all(not(windows), not(feature = "video-mpv")))]
     {
         None
     }
