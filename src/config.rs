@@ -40,6 +40,9 @@ pub struct Config {
     /// Safety net for unattended use: restart cleanly (between items) if the player's
     /// memory use goes above this many MB. 0 = never.
     pub memory_limit_mb: u64,
+    /// Show the one-time bottom hint on the next fullscreen entry
+    /// ("Double-click to exit fullscreen"). Cleared after it has been shown.
+    pub show_fullscreen_exit_hint: bool,
 }
 
 impl Default for Config {
@@ -58,6 +61,7 @@ impl Default for Config {
             show_playlist: true,
             autostart_resume: false,
             memory_limit_mb: 1500,
+            show_fullscreen_exit_hint: true,
         }
     }
 }
