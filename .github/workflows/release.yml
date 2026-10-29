@@ -1,0 +1,112 @@
+name: Release packages
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  package:
+    name: Package (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: windows
+          - os: ubuntu-latest
+            artifact: linux
+          - os: macos-latest
+            artifact: macos
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Linux build deps (ALSA + libmpv)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libmpv-dev libmpv2 dpkg-dev
+
+      - name: Install macOS libmpv (Homebrew mpv)
+        if: runner.os == 'macOS'
+        run: brew install mpv
+
+      - name: Install Inno Setup (Windows)
+        if: runner.os == 'Windows'
+        run: choco install innosetup -y --no-progress
+
+      - name: Build + package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File packaging/windows/build.ps1
+          New-Item -ItemType Directory -Force -Path dist/upload | Out-Null
+          Copy-Item -Force dist/windows/* dist/upload/ -ErrorAction SilentlyContinue
+          Get-ChildItem dist/upload
+
+      - name: Build + package (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          bash packaging/linux/build-deb.sh
+          mkdir -p dist/upload
+          cp -a dist/linux/*.deb dist/upload/
+          cp -a target/release/audio-player dist/upload/audio-player-linux-amd64
+          ls -lh dist/upload
+
+      - name: Build + package (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          bash packaging/macos/build-app.sh
+          mkdir -p dist/upload
+          cp -a dist/macos/*.dmg dist/upload/
+          cp -a target/release/audio-player dist/upload/audio-player-macos
+          ls -lh dist/upload
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: audio-player-${{ matrix.artifact }}
+          path: dist/upload/
+          if-no-files-found: error
+
+  release:
+    name: Attach to GitHub Release
+    needs: package
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Flatten for release upload
+        run: |
+          mkdir -p release-assets
+          find artifacts -type f -print -exec cp -a {} release-assets/ \;
+          ls -lhR release-assets
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
