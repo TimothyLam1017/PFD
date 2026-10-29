@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, master, "p0-reliability-ci", "ux-tweaks-1-4"]
+    branches: [main, master, "p0-reliability-ci"]
   pull_request:
     branches: [main, master]
 
@@ -10,31 +10,9 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  dump-app:
-    name: Dump app.rs parts (temporary)
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/ux-tweaks-1-4'
-    steps:
-      - uses: actions/checkout@v4
-      - name: Split app.rs
-        run: |
-          mkdir -p parts
-          split -b 12000 -d -a 2 src/app.rs parts/part_
-          wc -c parts/*
-          # Also write hex/base64 index for recovery
-          for f in parts/part_*; do
-            base64 -w 0 "$f" > "$f.b64"
-          done
-      - uses: actions/upload-artifact@v4
-        with:
-          name: app-rs-parts
-          path: parts/
-
   windows:
     name: Windows (test + release build)
     runs-on: windows-latest
-    # Skip heavy Windows build while dumping; re-enable after UX push
-    if: github.ref != 'refs/heads/ux-tweaks-1-4'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
