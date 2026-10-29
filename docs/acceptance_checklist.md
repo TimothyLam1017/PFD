@@ -46,14 +46,14 @@
 
 | ID | Check | Expected | Result | Notes |
 |----|-------|----------|--------|-------|
-| M01 | Play / Pause / Stop | Works; UI state matches | [B] | box: no interactive GUI/music smoke this pass (not invented) |
-| M02 | Previous / Next | Prev restarts item if >3 s played; else previous item | [B] | box: no interactive GUI/music smoke this pass (not invented) |
-| M03 | Seek bar | Click/drag seeks; time labels update | [B] | box: no interactive GUI/music smoke this pass (not invented) |
-| M04 | Volume / mute / wheel on slider | 0–100 % perceptual; mute toggles | [B] | box: no interactive GUI/music smoke this pass (not invented) |
-| M05 | Repeat off / all / one | Behaviour matches mode | [B] | box: no interactive GUI/music smoke this pass (not invented) |
-| M06 | Formats: mp3, flac, wav, m4a/aac, ogg | Each plays without crash | [B] | box: no interactive GUI/music smoke this pass (not invented) |
-| M07 | Missing / unreadable file | Red ⚠; auto-skipped; queue continues | [B] | box: no interactive GUI/music smoke this pass (not invented) |
-| M08 | Playlist JSON load/save | BOM OK; relative paths; non-ASCII preserved | [B] | unit `parses_example_playlist` pass on box; interactive load/save not smoked |
+| M01 | Play / Pause / Stop | Works; UI state matches | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
+| M02 | Previous / Next | Prev restarts item if >3 s played; else previous item | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
+| M03 | Seek bar | Click/drag seeks; time labels update | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
+| M04 | Volume / mute / wheel on slider | 0–100 % perceptual; mute toggles | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
+| M05 | Repeat off / all / one | Behaviour matches mode | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
+| M06 | Formats: mp3, flac, wav, m4a/aac, ogg | Each plays without crash | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
+| M07 | Missing / unreadable file | Red ⚠; auto-skipped; queue continues | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
+| M08 | Playlist JSON load/save | BOM OK; relative paths; non-ASCII preserved | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | M09 | Folder add / DnD / reorder / delete | Queue updates; persisted | [B] | box: no interactive GUI/music smoke this pass (not invented) |
 | M10 | Tags fill title/artist/duration in background | Empty fields fill; playlist values win | [B] | box: no interactive GUI/music smoke this pass (not invented) |
 | M11 | CJK titles | Render (system CJK font or `font_path`) | [B] | box: no interactive GUI/music smoke this pass (not invented) |
@@ -66,14 +66,14 @@
 
 | ID | Check | Expected | Result | Notes |
 |----|-------|----------|--------|-------|
-| V01 | H.264 mp4 in window | Picture above playlist; audio sync OK | [B] | Win-only — Timothy Win11 smoke |
-| V02 | Hide playlist under video | Video fills player window | [B] | Win-only — Timothy Win11 smoke |
-| V03 | Fit / Fill / Stretch | Applies in window + fullscreen; per-entry `fit` overrides | [B] | Win-only — Timothy Win11 smoke |
+| V01 | H.264 mp4 in window | Picture above playlist; audio sync OK | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
+| V02 | Hide playlist under video | Video fills player window | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
+| V03 | Fit / Fill / Stretch | Applies in window + fullscreen; per-entry `fit` overrides | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | V04 | Non-square pixels | Display aspect corrected (DVD-style) | [B] | Win-only — Timothy Win11 smoke |
-| V05 | Gapless next video | No long black gap between items / loop to first | [B] | Win-only — Timothy Win11 smoke |
+| V05 | Gapless next video | No long black gap between items / loop to first | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | V06 | Mixed audio+video playlist | Advances correctly across types | [B] | Win-only — Timothy Win11 smoke |
 | V07 | Unsupported / no-picture file | Skip after ~20 s no picture; clear handling | [B] | Win-only — Timothy Win11 smoke |
-| V08 | HEVC / VP9 / AV1 | With Store extensions: play; without: **clear error + install guide** | [B] | Win-only — Timothy Win11 smoke; HEVC guide required |
+| V08 | HEVC / VP9 / AV1 | With Store extensions: play; without: **clear error + install guide** | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | V09 | `video_probe` example | Builds; writes `video-probe.log` with format/size/FPS notes | [B] | Win-only — Timothy Win11 smoke; tip `examples/video_probe.rs` not fetched to box (MCP size); Win example |
 
 ---
@@ -93,12 +93,12 @@
 
 | ID | Check | Expected | Result | Notes |
 |----|-------|----------|--------|-------|
-| F01 | Enter fullscreen (F / menu / double-click) | Picture only: no chrome, timeline, subtitles, cursor | [B] | Win-only — Timothy Win11 smoke |
-| F02 | Topmost + re-assert ~2 s | Stays above normal apps | [B] | Win-only — Timothy Win11 smoke |
+| F01 | Enter fullscreen (F / menu / double-click) | Picture only: no chrome, timeline, subtitles, cursor | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
+| F02 | Topmost + re-assert ~2 s | Stays above normal apps | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | F03 | High priority + no sleep/dim/screensaver | Display stays on during show | [B] | Win-only — Timothy Win11 smoke |
-| F04 | **Exit only by double-click on video** | Esc / stray keys do **not** exit | [B] | Win-only — Timothy Win11 smoke hard req |
-| F05 | Silent keys in fullscreen | Space, ←/→, Ctrl+←/→, P/N, media keys work | [B] | Win-only — Timothy Win11 smoke |
-| F06 | Monitor picker | Fullscreen on chosen monitor | [B] | Win-only — Timothy Win11 smoke |
+| F04 | **Exit only by double-click on video** | Esc / stray keys do **not** exit | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29); hard req — exit only double-click |
+| F05 | Silent keys in fullscreen | Space, ←/→, Ctrl+←/→, P/N, media keys work | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
+| F06 | Monitor picker | Fullscreen on chosen monitor | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | F07 | Lobby shortcut | `audio-player.exe --fullscreen --repeat all playlist.json` | [B] | Win-only — Timothy Win11 smoke |
 
 ---
@@ -107,9 +107,9 @@
 
 | ID | Check | Expected | Result | Notes |
 |----|-------|----------|--------|-------|
-| A01 | Options → Start with Windows | HKCU Run written; no admin | [B] | Win-only — Timothy Win11 smoke |
-| A02 | Autostart after sign-in | Opens fullscreen; loops last playlist | [B] | Win-only — Timothy Win11 smoke |
-| A03 | Continue from last item | Toggle respected | [B] | Win-only — Timothy Win11 smoke |
+| A01 | Options → Start with Windows | HKCU Run written; no admin | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
+| A02 | Autostart after sign-in | Opens fullscreen; loops last playlist | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
+| A03 | Continue from last item | Toggle respected | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | A04 | Wait for devices (~90 s) | Survives slow disk/audio/display ready | [B] | Win-only — Timothy Win11 smoke |
 | A05 | Queue saved on change | Power cut does not empty show list | [B] | Win-only — Timothy Win11 smoke |
 | A06 | OS checklist (manual) | Autologon / DND / Active hours / codec extensions documented | [B] | Win-only — Timothy Win11 smoke OS settings documented in README |
@@ -120,9 +120,9 @@
 
 | ID | Check | Expected | Result | Notes |
 |----|-------|----------|--------|-------|
-| S01 | Decoder hang ~20–25 s | Watchdog restarts process; continues next item; fullscreen restored if was FS | [B] | Win-only — Timothy Win11 smoke |
+| S01 | Decoder hang ~20–25 s | Watchdog restarts process; continues next item; fullscreen restored if was FS | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | S02 | `RegisterApplicationRestart` | After ≥60 s run, OS relaunch continues queue | [B] | Win-only — Timothy Win11 smoke |
-| S03 | `memory_limit_mb` (default 1500) | Restart at next item; force within ~60 s if no boundary | [B] | Win-only — Timothy Win11 smoke |
+| S03 | `memory_limit_mb` (default 1500) | Restart at next item; force within ~60 s if no boundary | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | S04 | Display mode change | Fullscreen window recreated to new mode | [B] | Win-only — Timothy Win11 smoke |
 | S05 | Recovery **fails** (no restart / stuck black / wrong index) | `[F]` + repro | [B] | Win-only — Timothy Win11 smoke |
 | S06 | Minimized / covered window | Auto-advance still works (watcher thread) | [B] | Win-only — Timothy Win11 smoke |
@@ -133,7 +133,7 @@
 
 | ID | Check | Expected | Result | Notes |
 |----|-------|----------|--------|-------|
-| D01 | Log location documented | Fixed path for release builds (no console) — **recommend** `%APPDATA%\audio-player\logs\` | [F] | only env_logger→stderr; no fixed release log file under config dir (gap vs recommend logs/) |
+| D01 | Log location documented | Fixed path for release builds (no console) — **recommend** `%APPDATA%\audio-player\logs\` | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29); release log path OK on Win11 (was local [F] gap) |
 | D02 | Fail packet | SHA, OS build, playlist, CLI flags, codec, monitor count, log + `video-probe.log` | [B] | not exercised |
 | D03 | Repro template used | See below | [B] | template present; unused this pass |
 
@@ -176,7 +176,7 @@ Recovery observed? (watchdog / OS restart / none):
 
 | ID | Check | Expected | Result | Notes |
 |----|-------|----------|--------|-------|
-| H01 | Esc exits fullscreen | Must **not** — `[F]` if it does | [B] | Win-only — Timothy Win11 smoke |
+| H01 | Esc exits fullscreen | Must **not** — `[F]` if it does | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29); Esc does **not** exit fullscreen |
 | H02 | UI not English (primary chrome) | `[F]` | [B] | box: no interactive GUI/music smoke this pass (not invented) |
 | H03 | Crash with no recovery and no actionable log | `[F]` | [B] | needs crash+log packet |
 | H04 | Installer missing on agreed ship platform | `[F]` or `[B]` until shipped | [P] | packaging scripts + release.yml artifacts present for Win/Linux/mac @899eefa (E04/E05); unsigned / E2E install still open |
@@ -220,3 +220,4 @@ Linux/mac: E02/E03 + M*; L01/L02 backend wired — need interactive play smoke +
 | 2026-10-29 | v1.3：Baseline → `234097eb` (PR #1 merged); repo URL → TimothyLam1017/PFD；Linux/mac video policy → **libmpv** (Win MF stays)；size ≤50MB；R01 CI present (Win test+release; tip Actions failed E0277)；R03 [P] Linux unit；E02 [P] Linux release 13 101 856 B；E04/E05/D01/L01–L03 gaps updated；K01/K05/K07 refreshed. Local checklist only — **do not push** without Timothy. |
 | 2026-10-29 | v1.3.1：E01 re-verify after PR #3 merge @ `9d0ebc74`; Actions run#10 **failure** E0425 `ENUM_DISPLAY_DEVICE_FLAGS` @ win.rs:280 (SendSyncHandle cleared E0277). E01 stays [F]; R01/K05 notes refreshed. Older UX tip run#8 @1f6a566c also failure. Local checklist only — **do not push**. |
 | 2026-10-29 | v1.4：Baseline → `899eefa` (PR #5 feat-libmpv-installers; includes PR #4 ENUM + PR #6 libmpv). E01 **[P]** Actions run#17 green (test+release). E04/E05/R02 **[P]** packaging/ + release.yml Win/Linux/mac artifacts (install E2E open). L01–L03 still [B] smoke; L04/K01 libmpv wired. R01 green Win; ci.yml still no Linux job. Superseded: run#12 @b32d6d06 success; run#14 @795fca28 success. **Timothy via 旺財 approved push.** |
+| 2026-10-29 | v1.5：Timothy Win11 smoke @`899eefa`（via 旺財）：M01–M08、V01/V02/V03/V05/V08、F01/F02/F04/F05/F06、H01、A01–A03、S01/S03、D01 全部 **[P]**。未測仍 [B]：V04/V06/V07/V09、F03/F07、A04–A06、S02/S04–S06、M09–M13、L01–L03、E03/E06–E08 等。Local checklist only — **do not push** without Timothy via 旺財。 |
