@@ -66,6 +66,41 @@ for now (the config flag is still cleared).
 Expect a short gap versus Windows Media Foundation’s dual-engine switch; loop-one uses
 `loop-file`.
 
+## Installers / packages
+
+Pre-built installers are produced by GitHub Actions
+([`.github/workflows/release.yml`](.github/workflows/release.yml)) on a `v*` tag or
+manual **workflow_dispatch**. Scripts live under [`packaging/`](packaging/).
+
+| Platform | How to build locally | What you get |
+|----------|----------------------|--------------|
+| **Windows** | `cargo build --release` then `powershell -File packaging/windows/build.ps1` (needs [Inno Setup 6](https://jrsoftware.org/isinfo.php)) | `dist/windows/audio-player-setup-<ver>.exe` |
+| **Linux** | `bash packaging/linux/build-deb.sh` (needs `libasound2-dev`, `dpkg-deb`; runtime **`libmpv2`**) | `dist/linux/audio-player_<ver>_amd64.deb` |
+| **macOS** | `brew install mpv` then `bash packaging/macos/build-app.sh` | `dist/macos/audio-player.app` + `.dmg` |
+
+Details, CI matrix, and known gaps: [`packaging/README.md`](packaging/README.md).
+
+**Quick install from packages**
+
+* Windows: run the setup `.exe` (unsigned private builds may trip SmartScreen — “More info → Run anyway”).
+* Linux: `sudo apt install ./audio-player_*.deb` (pulls / expects `libmpv2`).
+* macOS: open the `.dmg`, drag **A-Player** to Applications; install libmpv with `brew install mpv` before playing video. Unsigned builds may need right-click → Open the first time.
+
+### HEVC / VP9 / AV1 on Windows (no Store extension → install guide)
+
+Windows Media Foundation plays **H.264** out of the box. **HEVC**, **VP9**, and **AV1**
+need the matching **Video Extensions** from the Microsoft Store (free or paid; many PCs
+already have them). This app does **not** ship those codecs and cannot install Store
+extensions for you.
+
+1. Open the Microsoft Store on the PC that will run the player.
+2. Search for **HEVC Video Extensions** (and **VP9** / **AV1 Video Extensions** if needed).
+3. Install, then re-open the player and try the file again.
+
+If Store access is blocked (kiosk / LTSC / offline), use a PC policy that allows those
+extensions, or transcode signage media to **H.264** in an `.mp4`. On Linux/macOS, codecs
+come from the system ffmpeg/libmpv build instead of Store packs.
+
 ## Features
 
 ### Playback
@@ -83,6 +118,7 @@ Expect a short gap versus Windows Media Foundation’s dual-engine switch; loop-
   platform decoder supports — libmpv/ffmpeg on Linux/mac, Media Foundation on Windows).
   * **Windows:** H.264 works out of the box. HEVC, VP9 and AV1 need the matching
     (free or paid) **Video Extensions** from the Microsoft Store; many PCs already have them.
+    See [HEVC / VP9 / AV1 on Windows](#hevc--vp9--av1-on-windows-no-store-extension--install-guide) if Store extensions are missing.
   * **Linux/macOS:** codecs come from the system ffmpeg/libmpv build.
 * **In the player window:** the video shows above the playlist. To let the video fill
   the window, untick **Video → Show playlist under the video**.
@@ -153,7 +189,9 @@ item played if you tick **…continue from the last item played**.
    * **Settings → Windows Update → Advanced options → Active hours:** cover the hours the
      screen is in use, so Windows doesn't restart during a show.
    * **Microsoft Store:** install *HEVC*, *VP9* and *AV1 Video Extensions* if your
-     videos use those formats.
+     videos use those formats. If Store is unavailable, see
+     [HEVC / VP9 / AV1 on Windows](#hevc--vp9--av1-on-windows-no-store-extension--install-guide)
+     (or use H.264).
 
 Windows always keeps a few things on top of any app, so these can still appear:
 Ctrl+Alt+Del, admin (UAC) prompts, and critical system alerts.
@@ -239,13 +277,20 @@ src/
   engine.rs       play queue + audio (rodio) / video backends, repeat, auto-advance, gapless
   video/mod.rs    video API, aspect-ratio maths, watchdog / restarts
   video/win.rs    Windows video thread: Media Foundation + Direct3D 11, fullscreen window
-  video/stub.rs   non-Windows stand-in
+  video/mpv.rs    Linux/macOS libmpv backend (dynload)
+  video/mpv_ffi.rs libmpv FFI bindings for dynload
+  video/stub.rs   non-Windows stand-in (when video-mpv is off)
   autostart.rs    "Start with Windows" (HKCU Run key)
   launch.rs       command-line options
   playlist.rs     Track model, JSON load/save, folder scanning
   metadata.rs     lofty tag reading on a background thread
   config.rs       settings + queue persistence (dirs)
   fonts.rs        system CJK fallback font loading
+packaging/
+  windows/        Inno Setup script + build.ps1
+  linux/          .deb builder (Depends: libmpv2)
+  macos/          .app + .dmg builder
+  README.md       full packaging / CI notes
 examples/
   video_probe.rs  standalone video diagnostics
 ```
