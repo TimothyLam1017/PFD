@@ -7,6 +7,11 @@ rust-version = "1.87"
 description = "A lightweight native music player built with eframe/egui and rodio"
 license = "MIT OR Apache-2.0"
 
+[features]
+default = ["video-mpv"]
+# Linux/macOS video via dynloaded system libmpv (not bundled). No effect on Windows.
+video-mpv = ["dep:libloading"]
+
 [dependencies]
 # GUI — native only (glow renderer), no webview. Features mirror eframe_template
 # minus wasm/persistence (config is stored by us under `dirs::config_dir()`).
@@ -73,3 +78,7 @@ windows = { version = "0.62", features = [
 windows-core = "0.62"
 # Main window handle, so the video thread can restore it after fullscreen.
 raw-window-handle = "0.6"
+
+# Linux/macOS: dynload system libmpv for video (see feature `video-mpv`).
+[target.'cfg(not(windows))'.dependencies]
+libloading = { version = "0.8", optional = true }

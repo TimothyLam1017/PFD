@@ -4,18 +4,24 @@ A lightweight native music **and video** player written in Rust, based on the
 [eframe template](https://github.com/emilk/eframe_template) layout
 (`src/main.rs` + `src/lib.rs` + `src/app.rs`).
 
-It works as an everyday music player, and on Windows also as an unattended video
-screen. In that mode it loops a playlist in fullscreen with nothing on screen but the
-picture, stays on top of other windows, and can start by itself when Windows starts.
+It works as an everyday music player, and as an unattended video screen (Windows via
+Media Foundation; Linux/macOS via system **libmpv**). In that mode it loops a playlist
+in fullscreen with nothing on screen but the picture, stays on top of other windows,
+and on Windows can start by itself when the OS starts.
 
 * **GUI:** `eframe`/`egui` 0.31 with the glow (OpenGL) backend, so no webview.
 * **Audio:** `rodio` 0.22 with `symphonia-all` (mp3, flac, wav, m4a/aac, ogg/vorbis …).
 * **Video (Windows):** Windows Media Foundation through the `windows` crate. Decoding
   runs on the GPU, and there are no extra DLLs to ship.
+* **Video (Linux / macOS):** system **libmpv**, dynloaded at runtime (`libloading`).
+  The `video-mpv` Cargo feature is on by default for non-Windows builds. **libmpv is
+  not bundled** — install it on the system (keeps the release binary well under the
+  ~50 MB target). See below.
 * **Tags:** `lofty` (ID3v1/v2, Vorbis comments, MP4 atoms, APE …).
 * **Other crates:** `serde`/`serde_json`, `rfd` (file dialogs), `dirs` (config path).
 
-The Windows build is a single ~8 MB `audio-player.exe`.
+The Windows build is a single ~8–15 MB `audio-player.exe`. Linux/mac release binaries
+are similar in size because libmpv stays a system dependency.
 
 ## Build & run
 
@@ -30,9 +36,35 @@ cargo run --release -- "D:/Music/夜曲.mp3" "D:/Videos" my-playlist.json
 The release binary is `target/release/audio-player(.exe)`. On Windows it opens
 without a console window.
 
-**Linux** also needs the ALSA headers: `sudo apt install libasound2-dev` (Debian/Ubuntu)
-or `alsa-lib-devel` (Fedora). Video playback is Windows-only; elsewhere, video files are
-reported as unsupported and skipped.
+**Linux** needs ALSA headers to build: `sudo apt install libasound2-dev` (Debian/Ubuntu)
+or `alsa-lib-devel` (Fedora).
+
+### Video dependency (Linux / macOS) — system libmpv
+
+Video on Linux/macOS **dynloads** the system libmpv at runtime (not linked into the
+binary, not shipped in the package). Install it before playing video:
+
+| OS | Package / install |
+|----|-------------------|
+| Debian / Ubuntu | `sudo apt install libmpv2` (runtime) · `libmpv-dev` only if you compile other tools against it |
+| Fedora | `sudo dnf install mpv-libs` |
+| Arch | `sudo pacman -S mpv` |
+| macOS (Homebrew) | `brew install mpv` |
+
+Build with video (default): `cargo build --release`  
+Build without libmpv support: `cargo build --release --no-default-features`
+
+If libmpv is missing at runtime, opening a video shows a clear English error asking
+you to install it; the rest of the music player still works.
+
+**Fullscreen notes (libmpv):** the picture is shown in mpv’s own borderless/ontop
+window. Double-click exits fullscreen (Esc does not). Multi-monitor selection is
+best-effort (`fullscreen-screen`). The one-time bottom exit hint popup is Windows-only
+for now (the config flag is still cleared).
+
+**Gapless / preload:** a second libmpv handle preloads the next file (best-effort).
+Expect a short gap versus Windows Media Foundation’s dual-engine switch; loop-one uses
+`loop-file`.
 
 ## Features
 
@@ -46,11 +78,12 @@ reported as unsupported and skipped.
 * Audio and video can be mixed in one playlist.
 * Unreadable or missing files are flagged in red (⚠) and skipped automatically.
 
-### Video (Windows)
-* **Formats:** mp4, m4v, mov, mkv, wmv, avi, webm, ts, mpg, 3gp.
-  * H.264 works out of the box.
-  * HEVC, VP9 and AV1 need the matching (free or paid) **Video Extensions** from the
-    Microsoft Store; many PCs already have them.
+### Video
+* **Formats:** mp4, m4v, mov, mkv, wmv, avi, webm, ts, mpg, 3gp (and whatever the
+  platform decoder supports — libmpv/ffmpeg on Linux/mac, Media Foundation on Windows).
+  * **Windows:** H.264 works out of the box. HEVC, VP9 and AV1 need the matching
+    (free or paid) **Video Extensions** from the Microsoft Store; many PCs already have them.
+  * **Linux/macOS:** codecs come from the system ffmpeg/libmpv build.
 * **In the player window:** the video shows above the playlist. To let the video fill
   the window, untick **Video → Show playlist under the video**.
 * **Fullscreen:** double-click the video, press **F**, or use **Video → Fullscreen**.
