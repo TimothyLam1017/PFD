@@ -277,7 +277,7 @@ fn monitor_friendly_name(device: &[u16]) -> String {
             windows::core::PCWSTR(device.as_ptr()),
             0,
             &mut dd,
-            0,
+            0u32,
         )
     };
     if !ok.as_bool() {
