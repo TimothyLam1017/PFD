@@ -1,4 +1,4 @@
-//! Non-Windows stand-in: every video reports that it needs Windows.
+//! Stand-in when `video-mpv` is disabled: every video reports that libmpv is required.
 
 use std::sync::mpsc::{Receiver, RecvTimeoutError};
 use std::sync::Arc;
@@ -15,7 +15,10 @@ pub(super) fn run(rx: Receiver<Cmd>, shared: Arc<Shared>, ctx: egui::Context) {
             Ok(Cmd::Open { generation, .. }) => {
                 let mut s = lock(&shared.status);
                 if s.generation == generation {
-                    s.error = Some("Video playback is only available on Windows".to_owned());
+                    s.error = Some(
+                        "Video playback on this platform requires the `video-mpv` feature and system libmpv"
+                            .to_owned(),
+                    );
                 }
                 drop(s);
                 ctx.request_repaint();
