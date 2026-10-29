@@ -305,10 +305,13 @@ impl Engine {
             if let Err(e) = crate::config::save_queue(&self.tracks) {
                 log::error!("Saving queue before restart failed: {e}");
             }
-            self.video.restart_now(&RestartHint {
+            if let Err(e) = self.video.restart_now(&RestartHint {
                 next_index: Some(idx),
                 fullscreen_monitor: self.fullscreen,
-            });
+            }) {
+                // Spawn failed: keep this process running (see video::try_restart_process).
+                log::error!("Clean restart failed; continuing in this process: {e}");
+            }
         }
     }
 

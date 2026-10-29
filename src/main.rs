@@ -6,6 +6,14 @@ use eframe::egui;
 fn main() -> eframe::Result {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
+    // Best-effort single-instance guard (Windows named mutex). Prevents a second
+    // overlapping instance after a watchdog restart race; no-op on other OSes.
+    if let Err(e) = audio_player::acquire_single_instance() {
+        log::error!("{e}");
+        eprintln!("{e}");
+        std::process::exit(1);
+    }
+
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title("audio-player")
