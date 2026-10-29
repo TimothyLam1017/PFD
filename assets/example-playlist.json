@@ -1,4 +1,5 @@
 [
   { "path": "D:/Music/夜曲.mp3", "title": "夜曲", "artist": "周杰倫", "duration_secs": 233 },
-  { "path": "/home/user/音楽/さくら.mp3" }
+  { "path": "/home/user/音楽/さくら.mp3" },
+  { "path": "D:/Videos/promo.mp4", "fit": "fill" }
 ]

@@ -7,11 +7,13 @@
 //! [
 //!   { "path": "D:/Music/夜曲.mp3", "title": "夜曲", "artist": "周杰倫", "duration_secs": 233 },
 //!   { "path": "/home/user/音楽/さくら.mp3" },
-//!   "relative/paths/work/too.flac"
+//!   "relative/paths/work/too.flac",
+//!   { "path": "D:/Videos/promo.mp4", "fit": "fill" }
 //! ]
 //! ```
 //!
 //! Relative paths are resolved against the folder that contains the playlist.
+//! `fit` (videos only) overrides the aspect mode for that entry: `fit`, `fill` or `stretch`.
 
 use std::borrow::Cow;
 use std::fs;
@@ -20,10 +22,22 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::metadata::TrackMeta;
+use crate::video::{self, FitMode};
 
-/// File extensions we offer in dialogs and accept when scanning folders / dropping files.
-pub const SUPPORTED_EXTENSIONS: &[&str] =
-    &["mp3", "flac", "wav", "m4a", "mp4", "aac", "ogg", "oga"];
+/// Audio file extensions (played by rodio / symphonia).
+pub const AUDIO_EXTENSIONS: &[&str] = &["mp3", "flac", "wav", "m4a", "aac", "ogg", "oga"];
+
+/// Every extension offered in dialogs and accepted when scanning folders or dropping
+/// files: audio everywhere, plus video on Windows.
+pub fn supported_extensions() -> Vec<&'static str> {
+    let mut all = AUDIO_EXTENSIONS.to_vec();
+    if video::AVAILABLE {
+        all.extend_from_slice(video::VIDEO_EXTENSIONS);
+    } else {
+        all.push("mp4"); // audio track of an .mp4 still plays through symphonia
+    }
+    all
+}
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Track {
@@ -44,6 +58,14 @@ pub struct Track {
         deserialize_with = "deserialize_secs"
     )]
     pub duration_secs: Option<u64>,
+
+    /// Videos only: aspect mode for this entry (`fit`, `fill`, `stretch`).
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "deserialize_fit"
+    )]
+    pub fit: Option<FitMode>,
 
     /// Runtime only: the file is missing or could not be decoded.
     #[serde(skip)]
@@ -114,6 +136,25 @@ fn deserialize_secs<'de, D: Deserializer<'de>>(d: D) -> Result<Option<u64>, D::E
     })
 }
 
+/// Accept `"fit"` / `"fill"` / `"stretch"` in any case; anything else is ignored rather
+/// than making the whole playlist unreadable.
+fn deserialize_fit<'de, D: Deserializer<'de>>(d: D) -> Result<Option<FitMode>, D::Error> {
+    let value = Option::<serde_json::Value>::deserialize(d)?;
+    Ok(
+        match value
+            .as_ref()
+            .and_then(|v| v.as_str())
+            .map(str::to_ascii_lowercase)
+            .as_deref()
+        {
+            Some("fit") | Some("contain") => Some(FitMode::Fit),
+            Some("fill") | Some("cover") | Some("crop") => Some(FitMode::Fill),
+            Some("stretch") => Some(FitMode::Stretch),
+            _ => None,
+        },
+    )
+}
+
 /// An entry may be a full object or just a path string.
 #[derive(Deserialize)]
 #[serde(untagged)]
@@ -122,11 +163,11 @@ enum Entry {
     Track(Track),
 }
 
-pub fn is_supported_audio(path: &Path) -> bool {
+pub fn is_supported_media(path: &Path) -> bool {
     path.extension()
         .and_then(|e| e.to_str())
         .is_some_and(|ext| {
-            SUPPORTED_EXTENSIONS
+            supported_extensions()
                 .iter()
                 .any(|s| s.eq_ignore_ascii_case(ext))
         })
@@ -212,7 +253,7 @@ pub fn scan_dir(dir: &Path) -> Vec<PathBuf> {
             let path = entry.path();
             if file_type.is_dir() && depth < 32 {
                 walk(&path, depth + 1, out);
-            } else if file_type.is_file() && is_supported_audio(&path) {
+            } else if file_type.is_file() && is_supported_media(&path) {
                 out.push(path);
             }
         }
@@ -272,6 +313,38 @@ mod tests {
         assert!(!text.contains("unavailable"));
         assert_eq!(load(&out).unwrap().len(), 2);
 
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn per_entry_fit() {
+        let dir = std::env::temp_dir().join(format!("audio-player-fit-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("videos.json");
+        fs::write(
+            &file,
+            r#"[ { "path": "/v/a.mp4", "fit": "FILL" },
+                 { "path": "/v/b.mkv", "fit": "zoom-ish" },
+                 { "path": "/v/c.mov", "fit": "stretch" },
+                 { "path": "/v/d.mp4" } ]"#,
+        )
+        .unwrap();
+        let tracks = load(&file).unwrap();
+        assert_eq!(
+            tracks.len(),
+            4,
+            "an unknown fit value must not break the playlist"
+        );
+        assert_eq!(tracks[0].fit, Some(FitMode::Fill));
+        assert_eq!(tracks[1].fit, None);
+        assert_eq!(tracks[2].fit, Some(FitMode::Stretch));
+        assert_eq!(tracks[3].fit, None);
+
+        let out = dir.join("out.json");
+        save(&out, &tracks).unwrap();
+        let text = fs::read_to_string(&out).unwrap();
+        assert!(text.contains(r#""fit": "fill""#));
+        assert_eq!(text.matches("\"fit\"").count(), 2);
         fs::remove_dir_all(&dir).ok();
     }
 

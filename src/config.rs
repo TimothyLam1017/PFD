@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::engine::RepeatMode;
 use crate::playlist::{self, Track};
+use crate::video::FitMode;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
@@ -28,6 +29,17 @@ pub struct Config {
     pub last_dir: Option<PathBuf>,
     /// Optional extra font (e.g. a CJK .ttf/.ttc) if the auto-detected one is missing.
     pub font_path: Option<PathBuf>,
+    /// Default aspect mode for videos.
+    pub fit: FitMode,
+    /// Monitor used for fullscreen video (0 = main monitor).
+    pub fullscreen_monitor: usize,
+    /// Show the playlist below the video (otherwise the video fills the window).
+    pub show_playlist: bool,
+    /// When started with Windows: continue from the last item instead of the first.
+    pub autostart_resume: bool,
+    /// Safety net for unattended use: restart cleanly (between items) if the player's
+    /// memory use goes above this many MB. 0 = never.
+    pub memory_limit_mb: u64,
 }
 
 impl Default for Config {
@@ -41,6 +53,11 @@ impl Default for Config {
             last_track: None,
             last_dir: None,
             font_path: None,
+            fit: FitMode::Fit,
+            fullscreen_monitor: 0,
+            show_playlist: true,
+            autostart_resume: false,
+            memory_limit_mb: 1500,
         }
     }
 }

@@ -529,24 +529,23 @@ float4 ps_main(VSOut i) : SV_Target { return float4(tex.Sample(smp, i.uv).rgb, 1
                     Flags: 0,
                     ..Default::default()
                 };
-                let swapchain = match factory
-                    .CreateSwapChainForHwnd(&device, hwnd, &desc, None, None)
-                {
-                    Ok(s) => {
-                        log("swap chain: flip-discard (2 buffers)");
-                        s
-                    }
-                    Err(e) => {
-                        log(&format!(
+                let swapchain =
+                    match factory.CreateSwapChainForHwnd(&device, hwnd, &desc, None, None) {
+                        Ok(s) => {
+                            log("swap chain: flip-discard (2 buffers)");
+                            s
+                        }
+                        Err(e) => {
+                            log(&format!(
                             "flip-discard swap chain unavailable ({e}); falling back to blt model"
                         ));
-                        desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-                        desc.BufferCount = 1;
-                        factory
-                            .CreateSwapChainForHwnd(&device, hwnd, &desc, None, None)
-                            .map_err(|e| format!("swap chain: {e}"))?
-                    }
-                };
+                            desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+                            desc.BufferCount = 1;
+                            factory
+                                .CreateSwapChainForHwnd(&device, hwnd, &desc, None, None)
+                                .map_err(|e| format!("swap chain: {e}"))?
+                        }
+                    };
                 let _ = factory.MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
 
                 let backbuffer: ID3D11Texture2D =
@@ -1185,6 +1184,7 @@ float4 ps_main(VSOut i) : SV_Target { return float4(tex.Sample(smp, i.uv).rgb, 1
 /// the *pixel* aspect ratio (32:27 for a widescreen DVD) or the *display* aspect ratio
 /// (16:9). Both readings are tried and the one that lands closest to a standard screen
 /// shape wins. Square pixels keep the native size.
+#[cfg_attr(not(windows), allow(dead_code))]
 fn display_size(w: u32, h: u32, ax: u32, ay: u32) -> (u32, u32) {
     if w == 0 || h == 0 || ax == 0 || ay == 0 || ax == ay {
         return (w.max(1), h.max(1));

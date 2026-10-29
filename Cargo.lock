@@ -384,6 +384,7 @@ dependencies = [
  "env_logger",
  "lofty",
  "log",
+ "raw-window-handle",
  "rfd",
  "rodio",
  "serde",
