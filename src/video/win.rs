@@ -82,7 +82,17 @@ pub(super) fn private_memory_mb() -> Option<u64> {
 /// re-acquired if spawn fails and this process keeps running.
 const SINGLE_INSTANCE_MUTEX: windows::core::PCWSTR = w!("Local\\A-Player-audio-player-single");
 
-static SINGLE_INSTANCE: std::sync::Mutex<Option<HANDLE>> = std::sync::Mutex::new(None);
+/// Opaque Windows HANDLE wrapper so a process-wide named-mutex handle can live in a
+/// `static Mutex` (raw `HANDLE` is not `Send`/`Sync` in the `windows` crate).
+#[derive(Clone, Copy)]
+struct SendSyncHandle(HANDLE);
+
+// SAFETY: `HANDLE` is an opaque pointer-sized OS handle value. We only store the
+// named-mutex handle for acquire/release across threads under `SINGLE_INSTANCE`.
+unsafe impl Send for SendSyncHandle {}
+unsafe impl Sync for SendSyncHandle {}
+
+static SINGLE_INSTANCE: std::sync::Mutex<Option<SendSyncHandle>> = std::sync::Mutex::new(None);
 
 pub(super) fn acquire_single_instance() -> Result<(), String> {
     unsafe {
@@ -98,7 +108,7 @@ pub(super) fn acquire_single_instance() -> Result<(), String> {
         }
         *SINGLE_INSTANCE
             .lock()
-            .unwrap_or_else(|e| e.into_inner()) = Some(handle);
+            .unwrap_or_else(|e| e.into_inner()) = Some(SendSyncHandle(handle));
         Ok(())
     }
 }
@@ -107,7 +117,7 @@ pub(super) fn release_single_instance_for_restart() {
     let mut guard = SINGLE_INSTANCE
         .lock()
         .unwrap_or_else(|e| e.into_inner());
-    if let Some(handle) = guard.take() {
+    if let Some(SendSyncHandle(handle)) = guard.take() {
         unsafe {
             let _ = CloseHandle(handle);
         }
