@@ -71,6 +71,48 @@ pub(super) fn private_memory_mb() -> Option<u64> {
     Some((counters.PagefileUsage / (1024 * 1024)) as u64)
 }
 
+/// Named mutex preventing a second player instance on Windows.
+///
+/// Released briefly before a watchdog/self restart so the replacement can acquire it;
+/// re-acquired if spawn fails and this process keeps running.
+const SINGLE_INSTANCE_MUTEX: windows::core::PCWSTR = w!("Local\\A-Player-audio-player-single");
+
+static SINGLE_INSTANCE: std::sync::Mutex<Option<HANDLE>> = std::sync::Mutex::new(None);
+
+pub(super) fn acquire_single_instance() -> Result<(), String> {
+    unsafe {
+        let handle = CreateMutexW(None, true, SINGLE_INSTANCE_MUTEX).map_err(|e| {
+            format!("CreateMutexW(single-instance) failed: {e}")
+        })?;
+        if GetLastError() == ERROR_ALREADY_EXISTS {
+            let _ = CloseHandle(handle);
+            return Err(
+                "Another audio-player instance is already running (single-instance mutex held)"
+                    .into(),
+            );
+        }
+        *SINGLE_INSTANCE
+            .lock()
+            .unwrap_or_else(|e| e.into_inner()) = Some(handle);
+        Ok(())
+    }
+}
+
+pub(super) fn release_single_instance_for_restart() {
+    let mut guard = SINGLE_INSTANCE
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    if let Some(handle) = guard.take() {
+        unsafe {
+            let _ = CloseHandle(handle);
+        }
+    }
+}
+
+pub(super) fn reacquire_single_instance() -> Result<(), String> {
+    acquire_single_instance()
+}
+
 /// Wake the video thread so a command is handled immediately.
 pub(super) fn wake(shared: &Shared) {
     let id = shared.thread_id.load(Ordering::Relaxed);
@@ -198,9 +240,11 @@ pub(super) fn monitors() -> Vec<(RECT, bool)> {
     list
 }
 
-fn register_class() -> windows::core::Result<HINSTANCE> {
+fn register_class() -> Result<HINSTANCE, String> {
     unsafe {
-        let instance: HINSTANCE = GetModuleHandleW(None)?.into();
+        let instance: HINSTANCE = GetModuleHandleW(None)
+            .map_err(|e| format!("GetModuleHandleW failed while registering fullscreen window class: {e}"))?
+            .into();
         let class = WNDCLASSEXW {
             cbSize: std::mem::size_of::<WNDCLASSEXW>() as u32,
             style: CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW,
@@ -210,7 +254,16 @@ fn register_class() -> windows::core::Result<HINSTANCE> {
             lpszClassName: CLASS_NAME,
             ..Default::default()
         };
-        RegisterClassExW(&class);
+        let atom = RegisterClassExW(&class);
+        if atom == 0 {
+            let err = GetLastError();
+            // Already registered in this process (e.g. video thread re-entry) is fine.
+            if err != ERROR_CLASS_ALREADY_EXISTS {
+                return Err(format!(
+                    "RegisterClassExW(APlayerFullscreenVideo) failed: {err:?} (refusing to continue with a default/null HINSTANCE)"
+                ));
+            }
+        }
         Ok(instance)
     }
 }
@@ -523,7 +576,13 @@ pub(super) fn run(rx: Receiver<Cmd>, shared: Arc<Shared>, ctx: egui::Context) {
     };
     let mut mmcss_index = 0u32;
     let mmcss = unsafe { AvSetMmThreadCharacteristicsW(w!("Playback"), &mut mmcss_index) };
-    let instance = register_class().unwrap_or_default();
+    let instance = match register_class() {
+        Ok(instance) => instance,
+        Err(e) => {
+            log::error!("Video unavailable: {e}");
+            return failed_loop(rx, shared, ctx, e);
+        }
+    };
 
     let (events_tx, events_rx) = channel();
     let mut vt = VideoThread {

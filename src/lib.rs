@@ -11,3 +11,4 @@ mod playlist;
 mod video;
 
 pub use app::AudioPlayerApp;
+pub use video::acquire_single_instance;

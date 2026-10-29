@@ -341,9 +341,12 @@ impl Video {
         self.shared.restart_requested.load(Ordering::Relaxed)
     }
 
-    /// Restart the program now and continue from `hint` (never returns).
-    pub fn restart_now(&self, hint: &RestartHint) -> ! {
-        restart_process(hint)
+    /// Restart the program now and continue from `hint`.
+    ///
+    /// On success the process exits after the replacement has been spawned.
+    /// On spawn failure, returns `Err` and **keeps running** (see [`try_restart_process`]).
+    pub fn restart_now(&self, hint: &RestartHint) -> Result<(), String> {
+        try_restart_process(hint)
     }
 
     pub fn set_restart_hint(&self, hint: RestartHint) {
@@ -351,6 +354,19 @@ impl Video {
         win::register_os_restart(&restart_args(&hint));
         *lock(&self.shared.restart_hint) = hint;
     }
+}
+
+/// Acquire the Windows named mutex that prevents a second player instance.
+///
+/// No-op on non-Windows. On Windows, returns `Err` if another instance holds the mutex.
+#[cfg(windows)]
+pub fn acquire_single_instance() -> Result<(), String> {
+    win::acquire_single_instance()
+}
+
+#[cfg(not(windows))]
+pub fn acquire_single_instance() -> Result<(), String> {
+    Ok(())
 }
 
 /// Names of the connected monitors, primary first (index 0).
@@ -410,7 +426,11 @@ fn watchdog(shared: Arc<Shared>) {
             if memory_flagged_at.is_some_and(|t| t.elapsed() > Duration::from_secs(60)) {
                 let hint = lock(&shared.restart_hint).clone();
                 log::warn!("No item boundary within a minute; restarting now");
-                restart_process(&hint);
+                if let Err(e) = try_restart_process(&hint) {
+                    // Keep running; retry after another minute of no boundary.
+                    log::error!("Watchdog restart failed; keeping process alive: {e}");
+                    memory_flagged_at = Some(Instant::now());
+                }
             }
         }
 
@@ -429,7 +449,11 @@ fn watchdog(shared: Arc<Shared>) {
             "Video thread unresponsive for {} s; restarting (hint: {hint:?})",
             (now - beat) / 1000
         );
-        restart_process(&hint);
+        if let Err(e) = try_restart_process(&hint) {
+            // Keep running; require another stretch of missed heartbeats before retrying.
+            log::error!("Watchdog restart failed; keeping process alive: {e}");
+            stale_checks = 0;
+        }
     }
 }
 
@@ -449,16 +473,52 @@ fn restart_args(hint: &RestartHint) -> Vec<String> {
     args
 }
 
-/// Start a fresh copy of the player that continues from `hint`, then exit.
-fn restart_process(hint: &RestartHint) -> ! {
-    if let Ok(exe) = std::env::current_exe() {
-        let mut cmd = std::process::Command::new(exe);
-        cmd.args(restart_args(hint));
-        if let Err(e) = cmd.spawn() {
-            log::error!("Restart failed: {e}");
+/// Whether this process should exit after a restart spawn attempt.
+///
+/// Extracted so unit tests can lock the decision without spawning processes:
+/// exit **only** when the replacement was spawned successfully.
+pub(crate) fn exit_after_restart_spawn(spawn_succeeded: bool) -> bool {
+    spawn_succeeded
+}
+
+/// Start a fresh copy of the player that continues from `hint`.
+///
+/// # Spawn-failure behavior
+/// * **Spawn succeeds** → this process exits with code 3 (does not return).
+/// * **Spawn fails** (or `current_exe` cannot be resolved) → logs the error and
+///   returns `Err`. The current process **keeps running** so playback/watchdog
+///   can continue; callers must not assume the process has ended.
+///
+/// On Windows, the single-instance mutex is released before spawn so the
+/// replacement can acquire it; if spawn fails the mutex is re-acquired.
+fn try_restart_process(hint: &RestartHint) -> Result<(), String> {
+    let exe = std::env::current_exe().map_err(|e| {
+        let msg = format!("Restart aborted: cannot resolve current executable: {e}");
+        log::error!("{msg}");
+        msg
+    })?;
+
+    #[cfg(windows)]
+    win::release_single_instance_for_restart();
+
+    let mut cmd = std::process::Command::new(&exe);
+    cmd.args(restart_args(hint));
+    match cmd.spawn() {
+        Ok(_child) if exit_after_restart_spawn(true) => {
+            // Replacement is running; end this process.
+            std::process::exit(3);
+        }
+        Ok(_) => unreachable!("exit_after_restart_spawn(true) is always true"),
+        Err(e) => {
+            #[cfg(windows)]
+            if let Err(re) = win::reacquire_single_instance() {
+                log::error!("Failed to reacquire single-instance mutex after spawn error: {re}");
+            }
+            let msg = format!("Restart failed (keeping current process): {e}");
+            log::error!("{msg}");
+            Err(msg)
         }
     }
-    std::process::exit(3)
 }
 
 /// Private (committed) memory of this process in MB.
@@ -575,5 +635,30 @@ mod tests {
         assert_eq!(fit_within((1920, 1080), (960, 960)), (960, 540));
         assert_eq!(fit_within((640, 480), (1280, 720)), (640, 480));
         assert_eq!(fit_within((1080, 1920), (800, 450)), (253, 450));
+    }
+
+    #[test]
+    fn restart_exits_only_after_successful_spawn() {
+        assert!(exit_after_restart_spawn(true));
+        assert!(!exit_after_restart_spawn(false));
+    }
+
+    #[test]
+    fn restart_args_encode_hint() {
+        assert_eq!(restart_args(&RestartHint::default()), vec!["--resume".to_owned()]);
+        assert_eq!(
+            restart_args(&RestartHint {
+                next_index: Some(3),
+                fullscreen_monitor: Some(1),
+            }),
+            vec![
+                "--resume".to_owned(),
+                "--start-at".to_owned(),
+                "3".to_owned(),
+                "--fullscreen".to_owned(),
+                "--monitor".to_owned(),
+                "1".to_owned(),
+            ]
+        );
     }
 }
