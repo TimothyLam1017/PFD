@@ -62,6 +62,7 @@ reported as unsupported and skipped.
     notification banners.
   * **Double-click the video to leave fullscreen**; the player window comes back.
     Esc does nothing, so stray key presses can't end the show.
+  * The first time you enter fullscreen, a brief bottom hint says “Double-click to exit fullscreen”; it is not shown again.
 * **Picture shape** (Video menu), applied in the window and in fullscreen:
   * **Fit:** the whole picture at its true shape, with black bars.
   * **Fill:** covers the screen and crops the edges.

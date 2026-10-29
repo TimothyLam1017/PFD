@@ -230,7 +230,11 @@ impl AudioPlayerApp {
         }
         if fullscreen && video::AVAILABLE {
             let monitor = launch.monitor.unwrap_or(self.config.fullscreen_monitor);
-            lock(&self.engine).set_fullscreen(Some(monitor));
+            let mut eng = lock(&self.engine);
+            if self.config.show_fullscreen_exit_hint {
+                eng.video().arm_fullscreen_exit_hint();
+            }
+            eng.set_fullscreen(Some(monitor));
         }
     }
 
@@ -532,6 +536,9 @@ impl AudioPlayerApp {
                         if eng.fullscreen().is_some() {
                             eng.set_fullscreen(None);
                         } else {
+                            if self.config.show_fullscreen_exit_hint {
+                                eng.video().arm_fullscreen_exit_hint();
+                            }
                             eng.set_fullscreen(Some(self.config.fullscreen_monitor));
                         }
                     }
@@ -542,6 +549,9 @@ impl AudioPlayerApp {
                     Action::SetMonitor(m) => {
                         self.config.fullscreen_monitor = m;
                         if eng.fullscreen().is_some() {
+                            if self.config.show_fullscreen_exit_hint {
+                                eng.video().arm_fullscreen_exit_hint();
+                            }
                             eng.set_fullscreen(Some(m));
                         }
                     }
@@ -786,8 +796,7 @@ impl AudioPlayerApp {
                             ui.label("No monitor found");
                         }
                         for (i, name) in monitors.iter().enumerate() {
-                            let text = format!("{}: {name}", i + 1);
-                            if ui.radio(self.config.fullscreen_monitor == i, text).clicked() {
+                            if ui.radio(self.config.fullscreen_monitor == i, name).clicked() {
                                 actions.push(Action::SetMonitor(i));
                                 ui.close_menu();
                             }
@@ -801,6 +810,10 @@ impl AudioPlayerApp {
                 });
 
                 ui.menu_button("Options", |ui| {
+                    ui.label(
+                        "The first time you go fullscreen, a brief bottom hint says “Double-click to exit fullscreen”; it is not shown again.",
+                    );
+
                     ui.add_enabled_ui(autostart::AVAILABLE, |ui| {
                         let mut on = self.autostart_enabled;
                         if ui
@@ -833,10 +846,11 @@ impl AudioPlayerApp {
     }
 
     fn status_bar(&mut self, ctx: &egui::Context, eng: &Engine) {
+        // Errors stick until the next successful action or the user clears them.
         if self
             .status
             .as_ref()
-            .is_some_and(|s| s.at.elapsed() > STATUS_TIMEOUT)
+            .is_some_and(|s| !s.is_error && s.at.elapsed() > STATUS_TIMEOUT)
         {
             self.status = None;
         }
@@ -848,7 +862,14 @@ impl AudioPlayerApp {
                     } else {
                         ui.visuals().weak_text_color()
                     };
-                    ui.add(egui::Label::new(RichText::new(&status.text).color(color)).truncate());
+                    let resp = ui.add(
+                        egui::Label::new(RichText::new(&status.text).color(color))
+                            .truncate()
+                            .sense(egui::Sense::click()),
+                    );
+                    if resp.on_hover_text("Click to dismiss").clicked() {
+                        self.status = None;
+                    }
                 } else if self.meta.pending() > 0 {
                     ui.label(
                         RichText::new(format!("Reading tags… {} left", self.meta.pending())).weak(),
@@ -946,7 +967,7 @@ impl AudioPlayerApp {
                         egui::Button::new(RichText::new(icon).size(20.0))
                             .min_size(egui::vec2(40.0, 32.0))
                     };
-                    if ui.add(big("⏮")).on_hover_text("Previous").clicked() {
+                    if ui.add(big("⏮")).on_hover_text("Previous — restart current if more than 3 seconds in").clicked() {
                         actions.push(Action::Previous);
                     }
                     let (icon, tip) = if eng.state() == PlaybackState::Playing {
@@ -1302,6 +1323,9 @@ impl eframe::App for AudioPlayerApp {
                     EngineEvent::TrackStarted(i) => {
                         self.scroll_to = Some(i);
                         self.request_persist();
+                        if self.status.as_ref().is_some_and(|s| s.is_error) {
+                            self.status = None;
+                        }
                     }
                     EngineEvent::Error(e) => self.error(e),
                     EngineEvent::PlaylistEnded => self.info("End of playlist"),
@@ -1315,6 +1339,10 @@ impl eframe::App for AudioPlayerApp {
                         eng.fullscreen_closed();
                         ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
                         ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+                    }
+                    UiEvent::FullscreenExitHintShown => {
+                        self.config.show_fullscreen_exit_hint = false;
+                        self.request_persist();
                     }
                     UiEvent::Key(key) => actions.push(match key {
                         FullscreenKey::PlayPause => Action::PlayPause,

@@ -113,6 +113,8 @@ pub enum FullscreenKey {
 pub enum UiEvent {
     /// The user double-clicked the fullscreen picture.
     FullscreenExited,
+    /// The one-time "Double-click to exit fullscreen" hint was shown; clear the config flag.
+    FullscreenExitHintShown,
     Key(FullscreenKey),
 }
 
@@ -180,6 +182,9 @@ pub(crate) struct Shared {
     /// Set by the watchdog when the memory limit is exceeded; the engine restarts at
     /// the next item boundary so playback is barely interrupted.
     pub restart_requested: AtomicBool,
+    /// UI sets this before entering fullscreen when the one-time exit hint should show.
+    /// The video thread consumes it on enter and emits [`UiEvent::FullscreenExitHintShown`].
+    pub show_fullscreen_exit_hint: AtomicBool,
 }
 
 pub(crate) fn lock<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
@@ -216,6 +221,7 @@ impl Video {
             main_window: AtomicUsize::new(0),
             memory_limit_mb: AtomicU64::new(0),
             restart_requested: AtomicBool::new(false),
+            show_fullscreen_exit_hint: AtomicBool::new(false),
         });
 
         let thread_shared = Arc::clone(&shared);
@@ -310,6 +316,13 @@ impl Video {
         self.send(Cmd::Fullscreen(monitor));
     }
 
+    /// Arm the one-time fullscreen exit hint for the next enter (consumed by the video thread).
+    pub fn arm_fullscreen_exit_hint(&self) {
+        self.shared
+            .show_fullscreen_exit_hint
+            .store(true, Ordering::Relaxed);
+    }
+
     pub fn set_preview_size(&self, w: u32, h: u32) {
         self.send(Cmd::PreviewSize(w, h));
     }
@@ -369,19 +382,30 @@ pub fn acquire_single_instance() -> Result<(), String> {
     Ok(())
 }
 
-/// Names of the connected monitors, primary first (index 0).
+/// Labels for the connected monitors, primary first (index 0).
+///
+/// Format: `{n}: {name} ({w}×{h}{, main})`. If the OS has no friendly name,
+/// `{name}` is `Display {n}`.
 pub fn monitors() -> Vec<String> {
     #[cfg(windows)]
     {
         win::monitors()
             .into_iter()
-            .map(|(r, primary)| {
-                format!(
-                    "{}×{}{}",
-                    r.right - r.left,
-                    r.bottom - r.top,
-                    if primary { " (main)" } else { "" }
-                )
+            .enumerate()
+            .map(|(i, (r, primary, name))| {
+                let n = i + 1;
+                let label = if name.trim().is_empty() {
+                    format!("Display {n}")
+                } else {
+                    name
+                };
+                let w = r.right - r.left;
+                let h = r.bottom - r.top;
+                if primary {
+                    format!("{n}: {label} ({w}×{h}, main)")
+                } else {
+                    format!("{n}: {label} ({w}×{h})")
+                }
             })
             .collect()
     }

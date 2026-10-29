@@ -36,7 +36,12 @@ type EngineEvent = (u64, u32, usize, u32);
 
 const WM_WAKE: u32 = WM_APP + 1;
 const TOPMOST_TIMER: usize = 1;
+const HINT_TIMER: usize = 2;
+/// Mid-point of the 3–5 s board range for the one-time exit hint.
+const HINT_DURATION: Duration = Duration::from_secs(4);
+const HINT_TEXT: &str = "Double-click to exit fullscreen";
 const CLASS_NAME: windows::core::PCWSTR = w!("APlayerFullscreenVideo");
+const HINT_CLASS: windows::core::PCWSTR = w!("APlayerFullscreenExitHint");
 /// A file that shows no picture for this long is reported as failed (and skipped).
 const NO_PICTURE_LIMIT: Duration = Duration::from_secs(20);
 
@@ -219,25 +224,162 @@ extern "system" fn wndproc(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM)
     }
 }
 
-/// Connected monitors as (rectangle, is_primary), primary first.
-pub(super) fn monitors() -> Vec<(RECT, bool)> {
+/// Connected monitors as (rectangle, is_primary, friendly_name), primary first.
+pub(super) fn monitors() -> Vec<(RECT, bool, String)> {
     unsafe extern "system" fn cb(hmon: HMONITOR, _: HDC, _: *mut RECT, data: LPARAM) -> BOOL {
-        let list = unsafe { &mut *(data.0 as *mut Vec<(RECT, bool)>) };
-        let mut info = MONITORINFO {
-            cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+        let list = unsafe { &mut *(data.0 as *mut Vec<(RECT, bool, String)>) };
+        let mut info = MONITORINFOEXW {
+            monitorInfo: MONITORINFO {
+                cbSize: std::mem::size_of::<MONITORINFOEXW>() as u32,
+                ..Default::default()
+            },
             ..Default::default()
         };
-        if unsafe { GetMonitorInfoW(hmon, &mut info) }.as_bool() {
-            list.push((info.rcMonitor, info.dwFlags & MONITORINFOF_PRIMARY != 0));
+        let ok = unsafe {
+            GetMonitorInfoW(
+                hmon,
+                &mut info as *mut MONITORINFOEXW as *mut MONITORINFO,
+            )
+        };
+        if ok.as_bool() {
+            let primary = info.monitorInfo.dwFlags & MONITORINFOF_PRIMARY != 0;
+            let name = monitor_friendly_name(&info.szDevice);
+            list.push((info.monitorInfo.rcMonitor, primary, name));
         }
         TRUE
     }
-    let mut list: Vec<(RECT, bool)> = Vec::new();
+    let mut list: Vec<(RECT, bool, String)> = Vec::new();
     unsafe {
         let _ = EnumDisplayMonitors(None, None, Some(cb), LPARAM(&mut list as *mut _ as isize));
     }
-    list.sort_by_key(|(r, primary)| (!*primary, r.left, r.top));
+    list.sort_by_key(|(r, primary, _)| (!*primary, r.left, r.top));
     list
+}
+
+/// Friendly adapter name for a monitor device path (`\\.\DISPLAYn`), or empty if unknown.
+fn monitor_friendly_name(device: &[u16]) -> String {
+    let mut dd = DISPLAY_DEVICEW {
+        cb: std::mem::size_of::<DISPLAY_DEVICEW>() as u32,
+        ..Default::default()
+    };
+    let ok = unsafe {
+        EnumDisplayDevicesW(
+            windows::core::PCWSTR(device.as_ptr()),
+            0,
+            &mut dd,
+            ENUM_DISPLAY_DEVICE_FLAGS(0),
+        )
+    };
+    if !ok.as_bool() {
+        return String::new();
+    }
+    let end = dd
+        .DeviceString
+        .iter()
+        .position(|&c| c == 0)
+        .unwrap_or(dd.DeviceString.len());
+    String::from_utf16_lossy(&dd.DeviceString[..end])
+        .trim()
+        .to_owned()
+}
+
+/// Tiny layered popup that shows [`HINT_TEXT`] at the bottom of the fullscreen monitor
+/// for [`HINT_DURATION`], fading out in the last second.
+fn create_exit_hint(instance: HINSTANCE, monitor: RECT) -> Option<ExitHint> {
+    unsafe {
+        let wc = WNDCLASSEXW {
+            cbSize: std::mem::size_of::<WNDCLASSEXW>() as u32,
+            lpfnWndProc: Some(hint_wndproc),
+            hInstance: instance,
+            lpszClassName: HINT_CLASS,
+            hCursor: LoadCursorW(None, IDC_ARROW).unwrap_or_default(),
+            ..Default::default()
+        };
+        let _ = RegisterClassExW(&wc);
+
+        let hint_w = 420i32;
+        let hint_h = 36i32;
+        let mon_w = monitor.right - monitor.left;
+        let x = monitor.left + (mon_w - hint_w).max(0) / 2;
+        let y = monitor.bottom - hint_h - 48;
+        let hwnd = CreateWindowExW(
+            WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
+            HINT_CLASS,
+            w!(""),
+            WS_POPUP | WS_VISIBLE,
+            x,
+            y,
+            hint_w,
+            hint_h,
+            None,
+            None,
+            Some(instance),
+            None,
+        )
+        .ok()?;
+
+        let _ = SetLayeredWindowAttributes(hwnd, COLORREF(0), 230, LWA_ALPHA);
+        let _ = InvalidateRect(Some(hwnd), None, true);
+        SetTimer(Some(hwnd), HINT_TIMER, 50, None);
+        Some(ExitHint {
+            hwnd,
+            shown_at: Instant::now(),
+        })
+    }
+}
+
+fn destroy_exit_hint(hint: ExitHint) {
+    unsafe {
+        let _ = KillTimer(Some(hint.hwnd), HINT_TIMER);
+        let _ = DestroyWindow(hint.hwnd);
+    }
+}
+
+fn tick_exit_hint(hint: &ExitHint) -> bool {
+    let elapsed = hint.shown_at.elapsed();
+    if elapsed >= HINT_DURATION {
+        return false;
+    }
+    let alpha = if elapsed + Duration::from_secs(1) >= HINT_DURATION {
+        let left = (HINT_DURATION - elapsed).as_secs_f32().clamp(0.0, 1.0);
+        (230.0 * left) as u8
+    } else {
+        230
+    };
+    unsafe {
+        let _ = SetLayeredWindowAttributes(hint.hwnd, COLORREF(0), alpha, LWA_ALPHA);
+    }
+    true
+}
+
+extern "system" fn hint_wndproc(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
+    unsafe {
+        match msg {
+            WM_TIMER if wparam.0 == HINT_TIMER => LRESULT(0),
+            WM_PAINT => {
+                let mut ps = PAINTSTRUCT::default();
+                let hdc = BeginPaint(hwnd, &mut ps);
+                let mut rect = RECT::default();
+                let _ = GetClientRect(hwnd, &mut rect);
+                let bg = CreateSolidBrush(COLORREF(0x0020_2020));
+                let _ = FillRect(hdc, &rect, bg);
+                let _ = DeleteObject(bg.into());
+                let _ = SetBkMode(hdc, TRANSPARENT);
+                let _ = SetTextColor(hdc, COLORREF(0x00FF_FFFF));
+                let mut text: Vec<u16> = HINT_TEXT.encode_utf16().collect();
+                let _ = DrawTextW(
+                    hdc,
+                    &mut text,
+                    &mut rect,
+                    DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX,
+                );
+                let _ = EndPaint(hwnd, &ps);
+                LRESULT(0)
+            }
+            WM_NCHITTEST => LRESULT(HTTRANSPARENT as isize),
+            _ => DefWindowProcW(hwnd, msg, wparam, lparam),
+        }
+    }
 }
 
 fn register_class() -> Result<HINSTANCE, String> {
@@ -503,6 +645,13 @@ struct Fullscreen {
     w: u32,
     h: u32,
     monitor: usize,
+    /// One-time bottom exit hint popup (layered), if armed for this entry.
+    exit_hint: Option<ExitHint>,
+}
+
+struct ExitHint {
+    hwnd: HWND,
+    shown_at: Instant,
 }
 
 /// One media engine playing (or pre-loaded with) one file.
@@ -684,6 +833,7 @@ impl VideoThread {
             self.engine_events();
             self.check_stalled();
             self.frame_tick();
+            self.tick_fullscreen_hint();
             self.update_status();
             self.update_power();
 
@@ -1236,15 +1386,30 @@ impl VideoThread {
         }
     }
 
+    fn tick_fullscreen_hint(&mut self) {
+        let Some(fs) = &mut self.fullscreen else {
+            return;
+        };
+        let Some(hint) = &fs.exit_hint else {
+            return;
+        };
+        if !tick_exit_hint(hint) {
+            if let Some(h) = fs.exit_hint.take() {
+                destroy_exit_hint(h);
+            }
+        }
+    }
+
     // -------------------------------------------------------------- fullscreen
 
     fn enter_fullscreen(&mut self, monitor: usize) {
         let mons = monitors();
-        let Some(&(rect, _)) = mons.get(monitor).or_else(|| mons.first()) else {
+        let Some((rect_ref, _, _)) = mons.get(monitor).or_else(|| mons.first()) else {
             // No display yet (just after boot): try again shortly.
             self.fullscreen_pending = Some((monitor, Instant::now()));
             return;
         };
+        let rect = *rect_ref;
         let (w, h) = (
             (rect.right - rect.left) as u32,
             (rect.bottom - rect.top) as u32,
@@ -1322,12 +1487,24 @@ impl VideoThread {
                     w,
                     h,
                     monitor,
+                    exit_hint: None,
                 })
             })()
         };
         match made {
-            Ok(fs) => {
+            Ok(mut fs) => {
                 log::info!("Fullscreen on monitor {monitor} ({w}x{h})");
+                let show_hint = self
+                    .shared
+                    .show_fullscreen_exit_hint
+                    .swap(false, Ordering::Relaxed);
+                if show_hint {
+                    if let Some(hint) = create_exit_hint(self.instance, rect) {
+                        fs.exit_hint = Some(hint);
+                        lock(&self.shared.ui_events).push(UiEvent::FullscreenExitHintShown);
+                        self.ctx.request_repaint();
+                    }
+                }
                 self.fullscreen = Some(fs);
                 unsafe {
                     let _ = SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
@@ -1358,6 +1535,9 @@ impl VideoThread {
         let Some(fs) = self.fullscreen.take() else {
             return;
         };
+        if let Some(hint) = fs.exit_hint {
+            destroy_exit_hint(hint);
+        }
         unsafe {
             let _ = KillTimer(Some(fs.hwnd), TOPMOST_TIMER);
             drop(fs.rtv);
