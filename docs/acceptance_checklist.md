@@ -2,7 +2,7 @@
 
 **Product name:** **PFD** (*Player for dummies*)  
 **Code / crate / exe / Start Menu:** today `audio-player` — gradually unify branding to **PFD** (曲街) · repo https://github.com/TimothyLam1017/PFD  
-**Baseline tip:** `899eefa` (2026-10-29 HKT; main after PR #5 feat-libmpv-installers merge; includes PR #4 ENUM fix + PR #6 libmpv)  
+**Baseline tip:** `ed30c54c` (2026-10-30 HKT; main after PR #7 fix-inno-initialize-wizard; includes checklist v1.5 `ea2d54cd` + packaging ISCC fix)
 **Scope (Timothy):** everyday **music player** + **unattended video screen** (both)  
 **UI language:** English only (menus, errors, dialogs)  
 **Owner:** 曲質 (QA) · **Dev:** 曲街 · **UX:** 曲介  
@@ -34,7 +34,7 @@
 | E01 | `cargo build --release` on Windows | Produces `target/release/audio-player.exe`; size ≤50 MB | [P] | tip Actions run#17 @899eefa **success**: cargo test + cargo build --release (Windows). ENUM_DISPLAY_DEVICE_FLAGS fixed in PR #4 (0u32); PR #5 tip. https://github.com/TimothyLam1017/PFD/actions/runs/40884226812 |
 | E02 | `cargo build --release` on Linux | Binary builds; ALSA deps documented | [P] | Prior box [P] ~12.5 MiB (pre-libmpv). Tip `video-mpv` is dynload (no link-time libmpv). Tip re-verify on box blocked (apt mirror/pkg-config). release.yml Linux job installs libasound2-dev+libmpv. README ALSA+libmpv docs OK |
 | E03 | `cargo build --release` on macOS | Binary builds | [B] | no macOS runner on this box |
-| E04 | **Installer** (Windows) | Installs app, Start Menu / shortcut, uninstall clean | [P] | tip `899eefa`: `packaging/windows/audio-player.iss` + `build.ps1` (Inno); `release.yml` Win matrix uploads `audio-player-setup-*.exe`. Install E2E / SmartScreen **not** smoked on box |
+| E04 | **Installer** (Windows) | Installs app, Start Menu / shortcut, uninstall clean | [P] | tip `ed30c54c` (PR #7) Release packages run#40984596451 **success**: artifact `audio-player-windows` id 12947195099 — `audio-player-setup-0.1.0.exe` (~4.6 MiB) + `audio-player.exe` (~8.4 MiB), ≪50 MB. ISCC green. **Timothy Win11 install E2E @ed30c54c artifact (via 旺財 2026-10-30) [P]**: download setup → install → Start Menu **A-Player** → uninstall clean. SmartScreen not separately noted. |
 | E05 | Installer (Linux / macOS) | Installs cleanly (pkg/AppImage/dmg or agreed form); uninstall/docs OK | [P] | tip: `packaging/linux/build-deb.sh` (.deb Depends libmpv2) + `packaging/macos/build-app.sh` (.app+.dmg); `release.yml` ubuntu+macos artifact jobs. Install E2E **not** smoked on box |
 | E06 | First launch UI language | All visible chrome **English** | [B] | box: no interactive GUI/music smoke this pass (not invented) |
 | E07 | CLI open files / folders / playlist.json | Queue replaced; playback starts | [B] | CLI/playlist open not smoked without fixtures+GUI |
@@ -163,7 +163,7 @@ Recovery observed? (watchdog / OS restart / none):
 | ID | Check | Expected | Result | Notes |
 |----|-------|----------|--------|-------|
 | R01 | CI | At least `cargo test` + `cargo check` on PR/main | [P] | tip @899eefa Actions run#17 **green** (Win cargo test + release). ci.yml still **Windows-only** (no Linux job on PR/push). release.yml has Win/Linux/mac packaging matrix on tag/`workflow_dispatch`. Prior: run#14 (PR#6) success; run#12 (PR#4 ENUM) success (superseded tip) |
-| R02 | Packaging / installer artifact | CI or release job produces installable build | [P] | `packaging/` + `.github/workflows/release.yml` matrix uploads Win setup / Linux .deb / macOS .dmg (+ raw bins). Not triggered by every PR; needs tag or dispatch. Install E2E open |
+| R02 | Packaging / installer artifact | CI or release job produces installable build | [P] | tip `ed30c54c` run#40984596451: Win+Linux+macOS artifacts uploaded (windows setup+exe; linux; macos). Attach Release skipped (no publish). **Win install E2E [P]** (Timothy 2026-10-30 via 旺財). Linux/mac install E2E still open. |
 | R03 | `restart_process` spawn failure | Must **not** exit hard leaving screen dark if child `spawn` fails — log + safe fallback (stay alive or retry) | [P] | try_restart_process keeps alive on spawn fail; unit tests pass on Linux box |
 | R04 | Single instance | Second launch focuses / hands off to existing PFD; no duplicate fullscreen stacks | [B] | Win mutex code present; tip Win CI **compiles** (run#17 green). Second instance exits (no focus handoff) still open; Linux no-op |
 | R05 | Triple-restart behaviour | Document + verify: watchdog self-restart, OS `RegisterApplicationRestart`, memory-limit restart — each continues queue/FS correctly; no restart storm | [B] | README+code paths for watchdog/OS restart/memory; E2E not verified on box |
@@ -179,7 +179,7 @@ Recovery observed? (watchdog / OS restart / none):
 | H01 | Esc exits fullscreen | Must **not** — `[F]` if it does | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29); Esc does **not** exit fullscreen |
 | H02 | UI not English (primary chrome) | `[F]` | [B] | box: no interactive GUI/music smoke this pass (not invented) |
 | H03 | Crash with no recovery and no actionable log | `[F]` | [B] | needs crash+log packet |
-| H04 | Installer missing on agreed ship platform | `[F]` or `[B]` until shipped | [P] | packaging scripts + release.yml artifacts present for Win/Linux/mac @899eefa (E04/E05); unsigned / E2E install still open |
+| H04 | Installer missing on agreed ship platform | `[F]` or `[B]` until shipped | [P] | Win/Linux/mac packaging artifacts present @ed30c54c run#40984596451; unsigned. **Win install E2E [P]** (Timothy); Linux/mac install E2E still open. |
 
 ---
 
@@ -188,7 +188,7 @@ Recovery observed? (watchdog / OS restart / none):
 | ID | Item | Notes |
 |----|------|-------|
 | K01 | Linux/mac video backend | **libmpv wired** at `899eefa` (`video-mpv` default; `mpv.rs`/`mpv_ffi.rs`; stub only w/ `--no-default-features`). L01/L02 play smoke still open |
-| K02 | Installer | Scripts + release.yml for Win Inno / Linux .deb / macOS .dmg present @899eefa; unsigned; E2E install smoke open |
+| K02 | Installer | Scripts + release.yml for Win Inno / Linux .deb / macOS .dmg; Win artifact @ed30c54c; unsigned. **Win install E2E [P]** (Timothy 2026-10-30); Linux/mac E2E still open |
 | K03 | Store HEVC/VP9/AV1 extensions | External; guide mandatory |
 | K04 | Unit tests | tip adds restart spawn decision + restart_args tests (pass on Linux); playlist/launch/aspect remain; engine/autostart/watchdog still light |
 | K05 | CI Windows-only; tip run failed | tip Actions run#17 @899eefa **success**. ci.yml still Win-only on PR/push; Linux/mac packaging via release.yml only — see R01 |
@@ -221,3 +221,6 @@ Linux/mac: E02/E03 + M*; L01/L02 backend wired — need interactive play smoke +
 | 2026-10-29 | v1.3.1：E01 re-verify after PR #3 merge @ `9d0ebc74`; Actions run#10 **failure** E0425 `ENUM_DISPLAY_DEVICE_FLAGS` @ win.rs:280 (SendSyncHandle cleared E0277). E01 stays [F]; R01/K05 notes refreshed. Older UX tip run#8 @1f6a566c also failure. Local checklist only — **do not push**. |
 | 2026-10-29 | v1.4：Baseline → `899eefa` (PR #5 feat-libmpv-installers; includes PR #4 ENUM + PR #6 libmpv). E01 **[P]** Actions run#17 green (test+release). E04/E05/R02 **[P]** packaging/ + release.yml Win/Linux/mac artifacts (install E2E open). L01–L03 still [B] smoke; L04/K01 libmpv wired. R01 green Win; ci.yml still no Linux job. Superseded: run#12 @b32d6d06 success; run#14 @795fca28 success. **Timothy via 旺財 approved push.** |
 | 2026-10-29 | v1.5：Timothy Win11 smoke @`899eefa`（via 旺財）：M01–M08、V01/V02/V03/V05/V08、F01/F02/F04/F05/F06、H01、A01–A03、S01/S03、D01 全部 **[P]**。未測仍 [B]：V04/V06/V07/V09、F03/F07、A04–A06、S02/S04–S06、M09–M13、L01–L03、E03/E06–E08 等。Local checklist only — **do not push** without Timothy via 旺財。 |
+| 2026-10-30 | v1.5.1 local：Release packages run#40979093495 @`ea2d54cd`（no publish）：Win Package **[F]** ISCC `InitializeWizard` 應為 procedure 非 function Boolean → 無 Win artifact；Linux/mac Package **[P]** artifacts。E04 notes→[F] packaging build；R02 partial。**do not push** without Timothy via 旺財。 |
+| 2026-10-30 | v1.5.2 local：Baseline → `ed30c54c` (PR #7 Inno InitializeWizard fix). Release packages run#40984596451 **success**：E04/R02/H04 **[P]** (`audio-player-setup-0.1.0.exe` ~4.6 MiB). Install E2E still Win11. **do not push** without Timothy via 旺財。 |
+| 2026-10-30 | v1.5.3：Timothy Win11 **E04 install E2E [P]** @`ed30c54c` artifact（via 旺財）：download setup／Start Menu A-Player／uninstall 全部 OK。E04/R02/H04/K02 notes refreshed. **Timothy via 旺財 approved push.** |
