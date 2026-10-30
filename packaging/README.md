@@ -1,7 +1,7 @@
 # Packaging / installers
 
 Scripts and CI that produce **Windows**, **Linux**, and **macOS** install packages for
-`audio-player` (PFD). These stack on the `feat-libmpv` video backend: Linux/macOS
+**PFD**. These stack on the `feat-libmpv` video backend: Linux/macOS
 dynload system **libmpv** (not bundled); Windows keeps Media Foundation.
 
 Release binaries target **≤ ~50 MB** best-effort by not shipping libmpv/ffmpeg.
@@ -10,11 +10,12 @@ Release binaries target **≤ ~50 MB** best-effort by not shipping libmpv/ffmpeg
 
 | Platform | Artifact (typical) | Runtime video dependency |
 |----------|--------------------|--------------------------|
-| Windows  | `audio-player-setup-x.y.z.exe` (Inno Setup) | Media Foundation (+ Store codec packs for HEVC/VP9/AV1) |
-| Linux    | `audio-player_x.y.z_amd64.deb` | `libmpv2` (Debian/Ubuntu) / `mpv-libs` (Fedora) |
-| macOS    | `audio-player-x.y.z-macos.dmg` (contains `.app`) | Homebrew `mpv` (`brew install mpv`) |
+| Windows  | `PFD-setup-x.y.z.exe` (Inno Setup) | Media Foundation (+ Store codec packs for HEVC/VP9/AV1) |
+| Linux    | `pfd_x.y.z_amd64.deb` | `libmpv2` (Debian/Ubuntu) / `mpv-libs` (Fedora) |
+| macOS    | `PFD-x.y.z-macos.dmg` (contains `PFD.app`) | Homebrew `mpv` (`brew install mpv`) |
 
-CI also uploads the raw `cargo build --release` binary for each OS.
+CI uploads artifacts named `pfd-windows` / `pfd-linux` / `pfd-macos`, plus the raw
+`cargo build --release` binary (`pfd` / staged `PFD.exe` on Windows).
 
 ## Build locally
 
@@ -25,9 +26,9 @@ Requires Rust **1.87+**. From the repo root:
 1. `cargo build --release`
 2. Install [Inno Setup 6](https://jrsoftware.org/isinfo.php) (includes `ISCC.exe`).
 3. `packaging/windows/build.ps1`  
-   or: `ISCC packaging/windows/audio-player.iss`
+   or: `ISCC packaging/windows/pfd.iss`
 
-The script stages `target/release/audio-player.exe` under `dist/windows/` and runs the
+The script stages `target/release/pfd.exe` as `dist/windows/PFD.exe` and runs the
 `.iss` script. Unsigned installer is fine for private builds.
 
 ### Linux (`.deb`)
@@ -35,9 +36,9 @@ The script stages `target/release/audio-player.exe` under `dist/windows/` and ru
 1. Install build deps: `sudo apt install libasound2-dev libmpv2` (Ubuntu/Debian).
 2. `cargo build --release`
 3. `packaging/linux/build-deb.sh`  
-   Produces `dist/linux/audio-player_<version>_amd64.deb`.
+   Produces `dist/linux/pfd_<version>_amd64.deb`.
 
-Install: `sudo apt install ./dist/linux/audio-player_*.deb`  
+Install: `sudo apt install ./dist/linux/pfd_*.deb`  
 Runtime dep: package `Depends` on `libmpv2` (or install `libmpv2` yourself).
 
 Optional AppImage (not produced by default CI): see comments in `build-deb.sh`.
@@ -47,7 +48,7 @@ Optional AppImage (not produced by default CI): see comments in `build-deb.sh`.
 1. `brew install mpv` (provides libmpv for video).
 2. `cargo build --release`
 3. `packaging/macos/build-app.sh`  
-   Produces `dist/macos/audio-player.app` and `dist/macos/audio-player-<version>-macos.dmg`.
+   Produces `dist/macos/PFD.app` and `dist/macos/PFD-<version>-macos.dmg`.
 
 No Apple code signing / notarization in these scripts (Gatekeeper may warn on unsigned
 downloads).

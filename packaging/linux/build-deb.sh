@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build a simple amd64 .deb for audio-player (PFD).
+# Build a simple amd64 .deb for PFD.
 # Prerequisites: cargo release binary already built (or this script builds it),
 #                dpkg-deb, and runtime dep libmpv2 on the target machine.
 # Usage (from repo root):  bash packaging/linux/build-deb.sh
@@ -11,14 +11,14 @@ cd "$ROOT"
 VERSION="$(sed -n 's/^version *= *"\([^"]*\)".*/\1/p' Cargo.toml | head -1)"
 VERSION="${VERSION:-0.1.0}"
 ARCH="amd64"
-PKG_NAME="audio-player"
+PKG_NAME="pfd"
 DEB_DIR="$ROOT/dist/linux/${PKG_NAME}_${VERSION}_${ARCH}"
 OUT_DEB="$ROOT/dist/linux/${PKG_NAME}_${VERSION}_${ARCH}.deb"
 
 echo "==> cargo build --release"
 cargo build --release
 
-BIN="$ROOT/target/release/audio-player"
+BIN="$ROOT/target/release/pfd"
 test -x "$BIN"
 
 rm -rf "$DEB_DIR"
@@ -27,7 +27,7 @@ mkdir -p "$DEB_DIR/DEBIAN" \
          "$DEB_DIR/usr/share/applications" \
          "$DEB_DIR/usr/share/doc/$PKG_NAME"
 
-install -m 755 "$BIN" "$DEB_DIR/usr/bin/audio-player"
+install -m 755 "$BIN" "$DEB_DIR/usr/bin/pfd"
 
 cat > "$DEB_DIR/DEBIAN/control" <<CTRL
 Package: ${PKG_NAME}
@@ -36,18 +36,18 @@ Section: sound
 Priority: optional
 Architecture: ${ARCH}
 Depends: libmpv2 | libmpv1, libasound2 | libasound2t64
-Maintainer: audio-player contributors <noreply@example.com>
-Description: Lightweight native music and video player (PFD / A-Player)
+Maintainer: PFD contributors <noreply@example.com>
+Description: PFD — lightweight native music and video player
  eframe/egui music + video player. Video on Linux dynloads system libmpv
  (install libmpv2). Windows builds use Media Foundation instead.
 CTRL
 
-cat > "$DEB_DIR/usr/share/applications/audio-player.desktop" <<DESK
+cat > "$DEB_DIR/usr/share/applications/pfd.desktop" <<DESK
 [Desktop Entry]
 Type=Application
-Name=A-Player
+Name=PFD
 Comment=Lightweight music and video player
-Exec=audio-player %F
+Exec=pfd %F
 Terminal=false
 Categories=AudioVideo;Player;Audio;Video;
 MimeType=audio/mpeg;audio/flac;audio/x-wav;audio/mp4;video/mp4;video/x-matroska;video/webm;

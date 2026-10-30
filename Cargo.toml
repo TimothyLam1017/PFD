@@ -1,10 +1,10 @@
 [package]
-name = "audio-player"
+name = "pfd"
 version = "0.1.0"
-authors = ["audio-player contributors"]
+authors = ["PFD contributors"]
 edition = "2021"
 rust-version = "1.87"
-description = "A lightweight native music player built with eframe/egui and rodio"
+description = "PFD — Player for dummies: lightweight native music and video player"
 license = "MIT OR Apache-2.0"
 
 [features]

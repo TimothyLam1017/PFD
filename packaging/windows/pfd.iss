@@ -1,9 +1,9 @@
-; Inno Setup 6 script for audio-player (PFD)
+; Inno Setup 6 script for PFD
 ; Build: cargo build --release, then ISCC this file (or packaging/windows/build.ps1)
-; Stages expect DistDir = repo/dist/windows with audio-player.exe present.
+; Stages expect DistDir = repo/dist/windows with PFD.exe present.
 
-#define MyAppName "A-Player"
-#define MyAppExeName "audio-player.exe"
+#define MyAppName "PFD"
+#define MyAppExeName "PFD.exe"
 #ifndef MyAppVersion
   #define MyAppVersion "0.1.0"
 #endif
@@ -15,12 +15,12 @@
 AppId={{8F3C2A1B-9D4E-4F6A-B2C1-7E5D9A0B3C4D}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-AppPublisher=audio-player contributors
+AppPublisher=PFD contributors
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 OutputDir={#DistDir}
-OutputBaseFilename=audio-player-setup-{#MyAppVersion}
+OutputBaseFilename=PFD-setup-{#MyAppVersion}
 Compression=lzma2
 SolidCompression=yes
 ArchitecturesAllowed=x64compatible

@@ -283,7 +283,7 @@ mod tests {
 
     #[test]
     fn parses_example_playlist() {
-        let dir = std::env::temp_dir().join(format!("audio-player-test-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("pfd-test-{}", std::process::id()));
         fs::create_dir_all(&dir).unwrap();
         let file = dir.join("list.json");
         fs::write(
@@ -318,7 +318,7 @@ mod tests {
 
     #[test]
     fn per_entry_fit() {
-        let dir = std::env::temp_dir().join(format!("audio-player-fit-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("pfd-fit-{}", std::process::id()));
         fs::create_dir_all(&dir).unwrap();
         let file = dir.join("videos.json");
         fs::write(

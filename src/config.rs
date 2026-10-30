@@ -1,8 +1,8 @@
 //! Settings and the auto-saved play queue, stored under the OS config dir:
 //!
-//! * Windows: `%APPDATA%\audio-player\`
-//! * macOS:   `~/Library/Application Support/audio-player/`
-//! * Linux:   `~/.config/audio-player/`
+//! * Windows: `%APPDATA%\pfd\`
+//! * macOS:   `~/Library/Application Support/pfd/`
+//! * Linux:   `~/.config/pfd/`
 
 use std::fs;
 use std::path::PathBuf;
@@ -35,7 +35,8 @@ pub struct Config {
     pub fullscreen_monitor: usize,
     /// Show the playlist below the video (otherwise the video fills the window).
     pub show_playlist: bool,
-    /// When started with Windows: continue from the last item instead of the first.
+    /// Continue from the last item played when restoring the saved queue
+    /// (normal open, Windows autostart, or watchdog --resume).
     pub autostart_resume: bool,
     /// Safety net for unattended use: restart cleanly (between items) if the player's
     /// memory use goes above this many MB. 0 = never.
@@ -67,7 +68,7 @@ impl Default for Config {
 }
 
 pub fn config_dir() -> Option<PathBuf> {
-    dirs::config_dir().map(|d| d.join("audio-player"))
+    dirs::config_dir().map(|d| d.join("pfd"))
 }
 
 fn config_file() -> Option<PathBuf> {

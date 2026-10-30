@@ -8,7 +8,7 @@ fn main() -> eframe::Result {
 
     // Best-effort single-instance guard (Windows named mutex). Prevents a second
     // overlapping instance after a watchdog restart race; no-op on other OSes.
-    if let Err(e) = audio_player::acquire_single_instance() {
+    if let Err(e) = pfd::acquire_single_instance() {
         log::error!("{e}");
         eprintln!("{e}");
         std::process::exit(1);
@@ -16,8 +16,8 @@ fn main() -> eframe::Result {
 
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_title("audio-player")
-            .with_app_id("audio-player")
+            .with_title("PFD")
+            .with_app_id("pfd")
             .with_inner_size([760.0, 560.0])
             .with_min_inner_size([480.0, 340.0])
             .with_drag_and_drop(true),
@@ -25,8 +25,8 @@ fn main() -> eframe::Result {
     };
 
     eframe::run_native(
-        "audio-player",
+        "PFD",
         native_options,
-        Box::new(|cc| Ok(Box::new(audio_player::AudioPlayerApp::new(cc)))),
+        Box::new(|cc| Ok(Box::new(pfd::AudioPlayerApp::new(cc)))),
     )
 }

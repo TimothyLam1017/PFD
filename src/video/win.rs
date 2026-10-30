@@ -80,7 +80,7 @@ pub(super) fn private_memory_mb() -> Option<u64> {
 ///
 /// Released briefly before a watchdog/self restart so the replacement can acquire it;
 /// re-acquired if spawn fails and this process keeps running.
-const SINGLE_INSTANCE_MUTEX: windows::core::PCWSTR = w!("Local\\A-Player-audio-player-single");
+const SINGLE_INSTANCE_MUTEX: windows::core::PCWSTR = w!("Local\\PFD-single");
 
 /// Opaque Windows HANDLE wrapper so a process-wide named-mutex handle can live in a
 /// `static Mutex` (raw `HANDLE` is not `Send`/`Sync` in the `windows` crate).
@@ -102,7 +102,7 @@ pub(super) fn acquire_single_instance() -> Result<(), String> {
         if GetLastError() == ERROR_ALREADY_EXISTS {
             let _ = CloseHandle(handle);
             return Err(
-                "Another audio-player instance is already running (single-instance mutex held)"
+                "Another PFD instance is already running (single-instance mutex held)"
                     .into(),
             );
         }
@@ -1429,7 +1429,7 @@ impl VideoThread {
                 let hwnd = CreateWindowExW(
                     WS_EX_TOPMOST | WS_EX_APPWINDOW,
                     CLASS_NAME,
-                    w!("A-Player"),
+                    w!("PFD"),
                     WS_POPUP | WS_VISIBLE,
                     rect.left,
                     rect.top,

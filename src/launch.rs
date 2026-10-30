@@ -1,7 +1,7 @@
 //! Command-line options.
 //!
 //! ```text
-//! audio-player.exe [files | folders | playlist.json ...]
+//! PFD.exe [files | folders | playlist.json ...]
 //!     --autostart        started by Windows: fullscreen loop of the last playlist
 //!     --resume           continue the saved queue (used after a watchdog restart)
 //!     --fullscreen       start fullscreen
