@@ -1,8 +1,8 @@
 # PFD (A-Player) Acceptance Checklist
 
 **Product name:** **PFD** (*Player for dummies*)  
-**Code / crate / exe / Start Menu:** today `audio-player` — gradually unify branding to **PFD** (曲街) · repo https://github.com/TimothyLam1017/PFD  
-**Baseline tip:** `ed30c54c` (2026-10-30 HKT; main after PR #7 fix-inno-initialize-wizard; includes checklist v1.5 `ea2d54cd` + packaging ISCC fix)
+**Code / crate / exe / Start Menu / packaging / artifacts:** Timothy 2026-10-30 → unify to **PFD** (no `audio-player` on release packages／installer／exe／Start Menu). 曲街 implementing; re-verify after merge. · repo https://github.com/TimothyLam1017/PFD  
+**Baseline tip:** `dff56fd8` (2026-10-30 HKT; main after PR #8 fix-pfd-naming-and-continue; PFD rename + Continue B)
 **Scope (Timothy):** everyday **music player** + **unattended video screen** (both)  
 **UI language:** English only (menus, errors, dialogs)  
 **Owner:** 曲質 (QA) · **Dev:** 曲街 · **UX:** 曲介  
@@ -24,6 +24,8 @@
 | HEVC / VP9 / AV1 | Need **install guide** for Microsoft Store Video Extensions; missing codec → clear message + guide, not silent fail |
 | Crash / decoder hang / memory restart | **Best-effort recovery** — record caution if recovery works; hang/crash **without** recovery path = `[F]` |
 | Checklist push | Timothy approved 2026-10-29 via 旺財 |
+| Release / artifact naming | **PFD** on all release packages／artifacts／installer／exe／Start Menu (not `audio-player`) — Timothy 2026-10-30 via 旺財; 曲街 implementing |
+| Continue from last item | **Independent** Options checkbox; **not** tied to Start with Windows. Behaviour **B** (Timothy 2026-10-30 via 旺財／曲介): when enabled, **normal app open** also resumes from last item (not autostart-only). 曲街 implementing |
 
 ---
 
@@ -31,10 +33,10 @@
 
 | ID | Check | Expected | Result | Notes |
 |----|-------|----------|--------|-------|
-| E01 | `cargo build --release` on Windows | Produces `target/release/audio-player.exe`; size ≤50 MB | [P] | tip Actions run#17 @899eefa **success**: cargo test + cargo build --release (Windows). ENUM_DISPLAY_DEVICE_FLAGS fixed in PR #4 (0u32); PR #5 tip. https://github.com/TimothyLam1017/PFD/actions/runs/40884226812 |
+| E01 | `cargo build --release` on Windows | Produces `PFD.exe` / crate `pfd`; size ≤50 MB | [P] | tip `dff56fd8` CI run#24 https://github.com/TimothyLam1017/PFD/actions/runs/40999355806：`cargo test` + `cargo build --release` **success** (post steps still finishing). Crate/exe `pfd`/`PFD.exe`. |
 | E02 | `cargo build --release` on Linux | Binary builds; ALSA deps documented | [P] | Prior box [P] ~12.5 MiB (pre-libmpv). Tip `video-mpv` is dynload (no link-time libmpv). Tip re-verify on box blocked (apt mirror/pkg-config). release.yml Linux job installs libasound2-dev+libmpv. README ALSA+libmpv docs OK |
 | E03 | `cargo build --release` on macOS | Binary builds | [B] | no macOS runner on this box |
-| E04 | **Installer** (Windows) | Installs app, Start Menu / shortcut, uninstall clean | [P] | tip `ed30c54c` (PR #7) Release packages run#40984596451 **success**: artifact `audio-player-windows` id 12947195099 — `audio-player-setup-0.1.0.exe` (~4.6 MiB) + `audio-player.exe` (~8.4 MiB), ≪50 MB. ISCC green. **Timothy Win11 install E2E @ed30c54c artifact (via 旺財 2026-10-30) [P]**: download setup → install → Start Menu **A-Player** → uninstall clean. SmartScreen not separately noted. |
+| E04 | **Installer** (Windows) | Installs as **PFD**; Start Menu **PFD**; uninstall clean; artifact/setup/exe names **PFD***/`pfd-*` (not audio-player) | [P] | tip `dff56fd8` run#40999425598 **success**: `pfd-windows` → `PFD-setup-0.1.0.exe` (~4.6 MiB) + `PFD.exe` (~8.4 MiB). **Timothy Win11 (via 旺財 2026-10-30) [P]**: install → Start Menu **PFD** → uninstall clean; naming OK. Timothy **approved publish**. |
 | E05 | Installer (Linux / macOS) | Installs cleanly (pkg/AppImage/dmg or agreed form); uninstall/docs OK | [P] | tip: `packaging/linux/build-deb.sh` (.deb Depends libmpv2) + `packaging/macos/build-app.sh` (.app+.dmg); `release.yml` ubuntu+macos artifact jobs. Install E2E **not** smoked on box |
 | E06 | First launch UI language | All visible chrome **English** | [B] | box: no interactive GUI/music smoke this pass (not invented) |
 | E07 | CLI open files / folders / playlist.json | Queue replaced; playback starts | [B] | CLI/playlist open not smoked without fixtures+GUI |
@@ -99,7 +101,7 @@
 | F04 | **Exit only by double-click on video** | Esc / stray keys do **not** exit | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29); hard req — exit only double-click |
 | F05 | Silent keys in fullscreen | Space, ←/→, Ctrl+←/→, P/N, media keys work | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | F06 | Monitor picker | Fullscreen on chosen monitor | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
-| F07 | Lobby shortcut | `audio-player.exe --fullscreen --repeat all playlist.json` | [B] | Win-only — Timothy Win11 smoke |
+| F07 | Lobby shortcut | `pfd.exe` (or ship exe name) `--fullscreen --repeat all playlist.json` | [B] | Win-only — Timothy Win11 smoke; exe name → **PFD** after rename |
 
 ---
 
@@ -109,7 +111,7 @@
 |----|-------|----------|--------|-------|
 | A01 | Options → Start with Windows | HKCU Run written; no admin | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | A02 | Autostart after sign-in | Opens fullscreen; loops last playlist | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
-| A03 | Continue from last item | Toggle respected | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
+| A03 | Continue from last item | Independent Options checkbox; **not** bound to Start with Windows. **Behaviour B**: toggle ON → **normal launch** resumes last item; OFF → no auto-play from last on normal open | [P] | tip `dff56fd8` static + **Timothy Win11 (via 旺財 2026-10-30) [P]**: Continue independent; ON＝B normal open resumes last; OFF OK. |
 | A04 | Wait for devices (~90 s) | Survives slow disk/audio/display ready | [B] | Win-only — Timothy Win11 smoke |
 | A05 | Queue saved on change | Power cut does not empty show list | [B] | Win-only — Timothy Win11 smoke |
 | A06 | OS checklist (manual) | Autologon / DND / Active hours / codec extensions documented | [B] | Win-only — Timothy Win11 smoke OS settings documented in README |
@@ -163,7 +165,7 @@ Recovery observed? (watchdog / OS restart / none):
 | ID | Check | Expected | Result | Notes |
 |----|-------|----------|--------|-------|
 | R01 | CI | At least `cargo test` + `cargo check` on PR/main | [P] | tip @899eefa Actions run#17 **green** (Win cargo test + release). ci.yml still **Windows-only** (no Linux job on PR/push). release.yml has Win/Linux/mac packaging matrix on tag/`workflow_dispatch`. Prior: run#14 (PR#6) success; run#12 (PR#4 ENUM) success (superseded tip) |
-| R02 | Packaging / installer artifact | CI or release job produces installable build | [P] | tip `ed30c54c` run#40984596451: Win+Linux+macOS artifacts uploaded (windows setup+exe; linux; macos). Attach Release skipped (no publish). **Win install E2E [P]** (Timothy 2026-10-30 via 旺財). Linux/mac install E2E still open. |
+| R02 | Packaging / installer artifact | CI or release job produces installable build | [P] | tip `dff56fd8` run#40999425598: `pfd-*` Win/Linux/mac uploaded. Win install E2E **[P]** (Timothy). Timothy approved **publish** (via 旺財 2026-10-30) — Attach Release pending 曲街. |
 | R03 | `restart_process` spawn failure | Must **not** exit hard leaving screen dark if child `spawn` fails — log + safe fallback (stay alive or retry) | [P] | try_restart_process keeps alive on spawn fail; unit tests pass on Linux box |
 | R04 | Single instance | Second launch focuses / hands off to existing PFD; no duplicate fullscreen stacks | [B] | Win mutex code present; tip Win CI **compiles** (run#17 green). Second instance exits (no focus handoff) still open; Linux no-op |
 | R05 | Triple-restart behaviour | Document + verify: watchdog self-restart, OS `RegisterApplicationRestart`, memory-limit restart — each continues queue/FS correctly; no restart storm | [B] | README+code paths for watchdog/OS restart/memory; E2E not verified on box |
@@ -179,7 +181,7 @@ Recovery observed? (watchdog / OS restart / none):
 | H01 | Esc exits fullscreen | Must **not** — `[F]` if it does | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29); Esc does **not** exit fullscreen |
 | H02 | UI not English (primary chrome) | `[F]` | [B] | box: no interactive GUI/music smoke this pass (not invented) |
 | H03 | Crash with no recovery and no actionable log | `[F]` | [B] | needs crash+log packet |
-| H04 | Installer missing on agreed ship platform | `[F]` or `[B]` until shipped | [P] | Win/Linux/mac packaging artifacts present @ed30c54c run#40984596451; unsigned. **Win install E2E [P]** (Timothy); Linux/mac install E2E still open. |
+| H04 | Installer missing on agreed ship platform | `[F]` or `[B]` until shipped | [P] | tip `dff56fd8` `pfd-*` artifacts present; Win install E2E **[P]** (Timothy). Unsigned; Linux/mac E2E open. Publish approved (Timothy). |
 
 ---
 
@@ -188,7 +190,7 @@ Recovery observed? (watchdog / OS restart / none):
 | ID | Item | Notes |
 |----|------|-------|
 | K01 | Linux/mac video backend | **libmpv wired** at `899eefa` (`video-mpv` default; `mpv.rs`/`mpv_ffi.rs`; stub only w/ `--no-default-features`). L01/L02 play smoke still open |
-| K02 | Installer | Scripts + release.yml for Win Inno / Linux .deb / macOS .dmg; Win artifact @ed30c54c; unsigned. **Win install E2E [P]** (Timothy 2026-10-30); Linux/mac E2E still open |
+| K02 | Installer | tip `dff56fd8` `pfd-*` artifacts; Win Start Menu／uninstall E2E **[P]** (Timothy 2026-10-30). Unsigned; Linux/mac E2E open; publish approved |
 | K03 | Store HEVC/VP9/AV1 extensions | External; guide mandatory |
 | K04 | Unit tests | tip adds restart spawn decision + restart_args tests (pass on Linux); playlist/launch/aspect remain; engine/autostart/watchdog still light |
 | K05 | CI Windows-only; tip run failed | tip Actions run#17 @899eefa **success**. ci.yml still Win-only on PR/push; Linux/mac packaging via release.yml only — see R01 |
@@ -224,3 +226,8 @@ Linux/mac: E02/E03 + M*; L01/L02 backend wired — need interactive play smoke +
 | 2026-10-30 | v1.5.1 local：Release packages run#40979093495 @`ea2d54cd`（no publish）：Win Package **[F]** ISCC `InitializeWizard` 應為 procedure 非 function Boolean → 無 Win artifact；Linux/mac Package **[P]** artifacts。E04 notes→[F] packaging build；R02 partial。**do not push** without Timothy via 旺財。 |
 | 2026-10-30 | v1.5.2 local：Baseline → `ed30c54c` (PR #7 Inno InitializeWizard fix). Release packages run#40984596451 **success**：E04/R02/H04 **[P]** (`audio-player-setup-0.1.0.exe` ~4.6 MiB). Install E2E still Win11. **do not push** without Timothy via 旺財。 |
 | 2026-10-30 | v1.5.3：Timothy Win11 **E04 install E2E [P]** @`ed30c54c` artifact（via 旺財）：download setup／Start Menu A-Player／uninstall 全部 OK。E04/R02/H04/K02 notes refreshed. **Timothy via 旺財 approved push.** |
+| 2026-10-30 | v1.5.4 local：Timothy via 旺財（曲街跟）—(1) release package／artifact／installer／exe／Start Menu 統一 **PFD**（唔再 audio-player）；(2) Options「continue from the last item played」獨立，唔綁 Start with Windows。E01/E04/A03/F07/K02 + Owner policy 預記；Result 標 [P]* 等曲街 PR merge 後重驗。**do not push** without Timothy via 旺財。 |
+| 2026-10-30 | v1.5.4b local：Timothy via 旺財／曲介拍板 Continue＝**B**（普通開 app 亦由 last item 起播）。A03 Expected／Owner policy 跟 B；等曲街改完重驗。**do not push** without Timothy via 旺財。 |
+| 2026-10-30 | v1.5.5 local：PR #8 merged main `dff56fd8`（PFD 改名＋Continue B）。E01 CI run#24 in_progress；E04 靜態 iss/yml **[P]**、等 Release dispatch＋Timothy Win11 E2E；A03 靜態 start_up **[P]**、等 Win11 Options E2E。**do not push** without Timothy via 旺財。 |
+| 2026-10-30 | v1.5.6 local：Release packages run#40999425598 @`dff56fd8` **success** — E04/R02 artifact 名 **[P]**（`pfd-windows`→`PFD-setup-0.1.0.exe`+`PFD.exe`；linux/mac 亦 pfd/PFD）。A03 靜態仍 [B] 等 Win11；E04 install E2E（Start Menu PFD）等 Timothy。**do not push** without Timothy via 旺財。 |
+| 2026-10-30 | v1.5.7：Timothy Win11（via 旺財）E04 名＋install／Start Menu **PFD**／uninstall **[P]**；A03＝B（獨立＋ON/OFF）**[P]**；E01 CI run#24 test+release **[P]**。Timothy **已批 publish**。**Timothy via 旺財 approved push.** |
