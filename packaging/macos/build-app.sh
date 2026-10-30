@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build audio-player.app + a simple .dmg.
+# Build PFD.app + a simple .dmg.
 # Prerequisites: Rust 1.87+, brew install mpv (for runtime libmpv), hdiutil.
 # Usage (from repo root):  bash packaging/macos/build-app.sh
 set -euo pipefail
@@ -10,31 +10,31 @@ cd "$ROOT"
 VERSION="$(sed -n 's/^version *= *"\([^"]*\)".*/\1/p' Cargo.toml | head -1)"
 VERSION="${VERSION:-0.1.0}"
 DIST="$ROOT/dist/macos"
-APP="$DIST/audio-player.app"
-DMG="$DIST/audio-player-${VERSION}-macos.dmg"
+APP="$DIST/PFD.app"
+DMG="$DIST/PFD-${VERSION}-macos.dmg"
 
 echo "==> cargo build --release"
 cargo build --release
 
-BIN="$ROOT/target/release/audio-player"
+BIN="$ROOT/target/release/pfd"
 test -x "$BIN"
 
 rm -rf "$APP" "$DMG"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-install -m 755 "$BIN" "$APP/Contents/MacOS/audio-player"
+install -m 755 "$BIN" "$APP/Contents/MacOS/pfd"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CFBundleName</key><string>A-Player</string>
-  <key>CFBundleDisplayName</key><string>A-Player</string>
-  <key>CFBundleIdentifier</key><string>com.audio-player.app</string>
+  <key>CFBundleName</key><string>PFD</string>
+  <key>CFBundleDisplayName</key><string>PFD</string>
+  <key>CFBundleIdentifier</key><string>com.pfd.app</string>
   <key>CFBundleVersion</key><string>${VERSION}</string>
   <key>CFBundleShortVersionString</key><string>${VERSION}</string>
-  <key>CFBundleExecutable</key><string>audio-player</string>
+  <key>CFBundleExecutable</key><string>pfd</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>LSMinimumSystemVersion</key><string>11.0</string>
   <key>NSHighResolutionCapable</key><true/>
@@ -67,9 +67,9 @@ rm -rf "$STAGE"
 mkdir -p "$STAGE"
 cp -R "$APP" "$STAGE/"
 ln -sf /Applications "$STAGE/Applications"
-hdiutil create -volname "A-Player ${VERSION}" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
+hdiutil create -volname "PFD ${VERSION}" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
 rm -rf "$STAGE"
 
 echo "Done: $APP"
 echo "Done: $DMG"
-ls -lh "$APP/Contents/MacOS/audio-player" "$DMG"
+ls -lh "$APP/Contents/MacOS/pfd" "$DMG"

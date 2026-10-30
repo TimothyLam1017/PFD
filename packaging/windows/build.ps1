@@ -15,7 +15,8 @@ if ($LASTEXITCODE -ne 0) { throw "cargo build failed" }
 
 $Dist = Join-Path $Root "dist\windows"
 New-Item -ItemType Directory -Force -Path $Dist | Out-Null
-Copy-Item -Force "target\release\audio-player.exe" (Join-Path $Dist "audio-player.exe")
+# Cargo package name is `pfd` → target/release/pfd.exe; stage user-facing PFD.exe
+Copy-Item -Force "target\release\pfd.exe" (Join-Path $Dist "PFD.exe")
 
 $Iscc = $null
 foreach ($cand in @(
@@ -27,12 +28,12 @@ foreach ($cand in @(
     if (Test-Path $cand) { $Iscc = $cand; break }
 }
 if (-not $Iscc) {
-    Write-Warning "ISCC.exe not found. Staged binary at $Dist\audio-player.exe"
-    Write-Warning "Install Inno Setup 6 and re-run, or: ISCC packaging\windows\audio-player.iss"
+    Write-Warning "ISCC.exe not found. Staged binary at $Dist\PFD.exe"
+    Write-Warning "Install Inno Setup 6 and re-run, or: ISCC packaging\windows\pfd.iss"
     exit 0
 }
 
-$Iss = Join-Path $Root "packaging\windows\audio-player.iss"
+$Iss = Join-Path $Root "packaging\windows\pfd.iss"
 Write-Host "==> $Iscc $Iss (version $Version)"
 & $Iscc "/DMyAppVersion=$Version" "/DDistDir=$Dist" $Iss
 if ($LASTEXITCODE -ne 0) { throw "ISCC failed" }
