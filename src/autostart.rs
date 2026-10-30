@@ -22,7 +22,7 @@ mod imp {
     use windows::Win32::System::Registry::*;
 
     const RUN_KEY: PCWSTR = w!("Software\\Microsoft\\Windows\\CurrentVersion\\Run");
-    const VALUE: PCWSTR = w!("A-Player");
+    const VALUE: PCWSTR = w!("PFD");
 
     /// The registered command line, if any.
     pub fn registered() -> Option<String> {

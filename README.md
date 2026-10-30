@@ -1,4 +1,4 @@
-# A-Player (`audio-player`)
+# PFD (`pfd`)
 
 A lightweight native music **and video** player written in Rust, based on the
 [eframe template](https://github.com/emilk/eframe_template) layout
@@ -20,7 +20,7 @@ and on Windows can start by itself when the OS starts.
 * **Tags:** `lofty` (ID3v1/v2, Vorbis comments, MP4 atoms, APE …).
 * **Other crates:** `serde`/`serde_json`, `rfd` (file dialogs), `dirs` (config path).
 
-The Windows build is a single ~8–15 MB `audio-player.exe`. Linux/mac release binaries
+The Windows build is a single ~8–15 MB `pfd.exe` (installer stages `PFD.exe`). Linux/mac release binaries
 are similar in size because libmpv stays a system dependency.
 
 ## Build & run
@@ -33,7 +33,7 @@ cargo run --release
 cargo run --release -- "D:/Music/夜曲.mp3" "D:/Videos" my-playlist.json
 ```
 
-The release binary is `target/release/audio-player(.exe)`. On Windows it opens
+The release binary is `target/release/pfd(.exe)`. On Windows it opens
 without a console window.
 
 **Linux** needs ALSA headers to build: `sudo apt install libasound2-dev` (Debian/Ubuntu)
@@ -74,17 +74,17 @@ manual **workflow_dispatch**. Scripts live under [`packaging/`](packaging/).
 
 | Platform | How to build locally | What you get |
 |----------|----------------------|--------------|
-| **Windows** | `cargo build --release` then `powershell -File packaging/windows/build.ps1` (needs [Inno Setup 6](https://jrsoftware.org/isinfo.php)) | `dist/windows/audio-player-setup-<ver>.exe` |
-| **Linux** | `bash packaging/linux/build-deb.sh` (needs `libasound2-dev`, `dpkg-deb`; runtime **`libmpv2`**) | `dist/linux/audio-player_<ver>_amd64.deb` |
-| **macOS** | `brew install mpv` then `bash packaging/macos/build-app.sh` | `dist/macos/audio-player.app` + `.dmg` |
+| **Windows** | `cargo build --release` then `powershell -File packaging/windows/build.ps1` (needs [Inno Setup 6](https://jrsoftware.org/isinfo.php)) | `dist/windows/PFD-setup-<ver>.exe` |
+| **Linux** | `bash packaging/linux/build-deb.sh` (needs `libasound2-dev`, `dpkg-deb`; runtime **`libmpv2`**) | `dist/linux/pfd_<ver>_amd64.deb` |
+| **macOS** | `brew install mpv` then `bash packaging/macos/build-app.sh` | `dist/macos/PFD.app` + `.dmg` |
 
 Details, CI matrix, and known gaps: [`packaging/README.md`](packaging/README.md).
 
 **Quick install from packages**
 
 * Windows: run the setup `.exe` (unsigned private builds may trip SmartScreen — “More info → Run anyway”).
-* Linux: `sudo apt install ./audio-player_*.deb` (pulls / expects `libmpv2`).
-* macOS: open the `.dmg`, drag **A-Player** to Applications; install libmpv with `brew install mpv` before playing video. Unsigned builds may need right-click → Open the first time.
+* Linux: `sudo apt install ./pfd_*.deb` (pulls / expects `libmpv2`).
+* macOS: open the `.dmg`, drag **PFD** to Applications; install libmpv with `brew install mpv` before playing video. Unsigned builds may need right-click → Open the first time.
 
 ### HEVC / VP9 / AV1 on Windows (no Store extension → install guide)
 
@@ -145,13 +145,18 @@ come from the system ffmpeg/libmpv build instead of Store packs.
   Ctrl+← / Ctrl+→ or P / N previous/next, and the media keys.
 
 ### Start with Windows
-**Options → Start with Windows.** After you sign in, the player opens straight into
-fullscreen and loops the last playlist. It starts from the first item, or from the last
-item played if you tick **…continue from the last item played**.
+**Options → Start with Windows.** After you sign in, PFD opens straight into
+fullscreen and loops the last playlist.
 
 * It uses your account's start-up list (`HKCU\…\Run`), so no admin rights are needed.
 * It waits up to a minute and a half for the screen, sound device and drives to be ready.
 * The queue is saved every time it changes, so a power cut doesn't lose it.
+
+### Continue from the last item played
+**Options → Continue from the last item played.** Independent of Start with Windows.
+When this is on, any open that restores the saved playlist starts at the last item
+played (including a normal app open — not only Start with Windows / `--autostart` /
+watchdog `--resume`).
 
 ### Unattended-screen safety nets
 * **Frozen video decoder:** a watchdog notices within ~25 s, restarts the player and
@@ -233,7 +238,7 @@ A JSON array (UTF-8, with or without a BOM). Only `path` is required:
 ## Command line
 
 ```text
-audio-player.exe [files | folders | playlist.json ...]
+PFD.exe [files | folders | playlist.json ...]
     --autostart          what "Start with Windows" runs: fullscreen loop of the last playlist
     --resume             continue the saved queue (used by the automatic restarts)
     --fullscreen         start in fullscreen
@@ -244,13 +249,13 @@ audio-player.exe [files | folders | playlist.json ...]
 ```
 
 Example shortcut for a lobby screen:
-`audio-player.exe --fullscreen --repeat all "D:\Signage\show.json"`
+`PFD.exe --fullscreen --repeat all "D:\Signage\show.json"`
 
 ## Config
 
-Stored in `dirs::config_dir()/audio-player/`
-(Windows `%APPDATA%\audio-player\`, macOS `~/Library/Application Support/audio-player/`,
-Linux `~/.config/audio-player/`):
+Stored in `dirs::config_dir()/pfd/`
+(Windows `%APPDATA%\pfd\`, macOS `~/Library/Application Support/pfd/`,
+Linux `~/.config/pfd/`):
 
 * `config.json`
   * Volume, mute, repeat, last playlist and folder.
