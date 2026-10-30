@@ -65,7 +65,7 @@ jobs:
           bash packaging/linux/build-deb.sh
           mkdir -p dist/upload
           cp -a dist/linux/*.deb dist/upload/
-          cp -a target/release/audio-player dist/upload/audio-player-linux-amd64
+          cp -a target/release/pfd dist/upload/pfd-linux-amd64
           ls -lh dist/upload
 
       - name: Build + package (macOS)
@@ -74,13 +74,13 @@ jobs:
           bash packaging/macos/build-app.sh
           mkdir -p dist/upload
           cp -a dist/macos/*.dmg dist/upload/
-          cp -a target/release/audio-player dist/upload/audio-player-macos
+          cp -a target/release/pfd dist/upload/pfd-macos
           ls -lh dist/upload
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: audio-player-${{ matrix.artifact }}
+          name: pfd-${{ matrix.artifact }}
           path: dist/upload/
           if-no-files-found: error
 
