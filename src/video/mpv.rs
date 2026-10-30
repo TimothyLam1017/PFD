@@ -149,7 +149,7 @@ fn configure_base(h: &Handle, for_window: bool) -> Result<(), String> {
         h.set_option("force-window", "yes")?;
         h.set_option("ontop", "yes")?;
         h.set_option("cursor-autohide", "always")?;
-        h.set_option("title", "A-Player video")?;
+        h.set_option("title", "PFD video")?;
         // Default VO (gpu/x11/wayland) — creates a real window we can fullscreen.
         h.set_option("vo", "gpu")?;
     } else {

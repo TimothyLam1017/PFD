@@ -198,7 +198,11 @@ impl AudioPlayerApp {
                 self.playlist_path = self.config.last_playlist.clone();
                 self.dirty = self.config.queue_dirty;
 
-                if (launch.autostart || launch.resume) && !empty {
+                // Autostart / watchdog / Options "Continue from the last item played":
+                // when Continue is on, a normal open that restored the saved queue also
+                // starts at the last item (not only --autostart / --resume).
+                if !empty && (launch.autostart || launch.resume || self.config.autostart_resume)
+                {
                     let resume_last = launch.resume || self.config.autostart_resume;
                     start_index = launch
                         .start_at
@@ -480,14 +484,21 @@ impl AudioPlayerApp {
                 Ok(()) => {
                     self.autostart_enabled = autostart::is_enabled();
                     self.info(if on {
-                        "A-Player will start with Windows and loop the last playlist fullscreen"
+                        "PFD will start with Windows and loop the last playlist fullscreen"
                     } else {
-                        "A-Player will no longer start with Windows"
+                        "PFD will no longer start with Windows"
                     });
                 }
                 Err(e) => self.error(e),
             },
-            Action::SetAutostartResume(on) => self.config.autostart_resume = on,
+            Action::SetAutostartResume(on) => {
+                self.config.autostart_resume = on;
+                self.info(if on {
+                    "Will continue from the last item played"
+                } else {
+                    "Will start from the first item"
+                });
+            }
             Action::SetVolume(v) => {
                 self.volume = v.clamp(0.0, 100.0);
                 let mut eng = lock(&self.engine);
@@ -819,7 +830,7 @@ impl AudioPlayerApp {
                         if ui
                             .checkbox(&mut on, "Start with Windows")
                             .on_hover_text(
-                                "After you sign in to Windows, A-Player opens in fullscreen \
+                                "After you sign in to Windows, PFD opens in fullscreen \
                                  and loops the last playlist. Double-click the video to leave fullscreen.",
                             )
                             .clicked()
@@ -827,19 +838,15 @@ impl AudioPlayerApp {
                             actions.push(Action::SetAutostart(on));
                             ui.close_menu();
                         }
-                        let mut resume = self.config.autostart_resume;
-                        if ui
-                            .add_enabled(
-                                self.autostart_enabled,
-                                egui::Checkbox::new(&mut resume, "…continue from the last item played"),
-                            )
-                            .on_hover_text("Otherwise it starts from the first item of the playlist.")
-                            .clicked()
-                        {
-                            actions.push(Action::SetAutostartResume(resume));
-                            ui.close_menu();
-                        }
                     });
+                    let mut resume = self.config.autostart_resume;
+                    if ui
+                        .checkbox(&mut resume, "Continue from the last item played")
+                        .clicked()
+                    {
+                        actions.push(Action::SetAutostartResume(resume));
+                        ui.close_menu();
+                    }
                 });
             });
         });
@@ -1269,15 +1276,15 @@ impl AudioPlayerApp {
         let title = match (eng.now_playing(), eng.state()) {
             (Some(t), PlaybackState::Playing | PlaybackState::Paused) if t.artist.is_some() => {
                 format!(
-                    "{} — {} · audio-player",
+                    "{} — {} · PFD",
                     t.display_title(),
                     t.display_artist()
                 )
             }
             (Some(t), PlaybackState::Playing | PlaybackState::Paused) => {
-                format!("{} · audio-player", t.display_title())
+                format!("{} · PFD", t.display_title())
             }
-            _ => "audio-player".to_owned(),
+            _ => "PFD".to_owned(),
         };
         if title != self.window_title {
             ctx.send_viewport_cmd(egui::ViewportCommand::Title(title.clone()));
