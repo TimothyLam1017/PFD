@@ -36,7 +36,7 @@
 | E01 | `cargo build --release` on Windows | Produces `PFD.exe` / crate `pfd`; size ≤50 MB | [P] | tip `dff56fd8` CI run#24 https://github.com/TimothyLam1017/PFD/actions/runs/40999355806：`cargo test` + `cargo build --release` **success** (post steps still finishing). Crate/exe `pfd`/`PFD.exe`. |
 | E02 | `cargo build --release` on Linux | Binary builds; ALSA deps documented | [P] | Prior box [P] ~12.5 MiB (pre-libmpv). Tip `video-mpv` is dynload (no link-time libmpv). Tip re-verify on box blocked (apt mirror/pkg-config). release.yml Linux job installs libasound2-dev+libmpv. README ALSA+libmpv docs OK |
 | E03 | `cargo build --release` on macOS | Binary builds | [B] | no macOS runner on this box |
-| E04 | **Installer** (Windows) | Installs as **PFD**; Start Menu **PFD**; uninstall clean; artifact/setup/exe names **PFD***/`pfd-*` (not audio-player) | [P] | tip `dff56fd8` run#40999425598 **success**: `pfd-windows` → `PFD-setup-0.1.0.exe` (~4.6 MiB) + `PFD.exe` (~8.4 MiB). **Timothy Win11 (via 旺財 2026-10-30) [P]**: install → Start Menu **PFD** → uninstall clean; naming OK. Timothy **approved publish**. |
+| E04 | **Installer** (Windows) | Installs as **PFD**; Start Menu **PFD**; uninstall clean; artifact/setup/exe names **PFD***/`pfd-*` (not audio-player) | [P] | tip `dff56fd8` Win11 install E2E **[P]** (via 旺財). **Published** [v0.1.0](https://github.com/TimothyLam1017/PFD/releases/tag/v0.1.0) attach run#41001211500 **success**：`PFD-setup-0.1.0.exe` (~4.6 MiB) + `PFD.exe` (~8.4 MiB); no `audio-player*`. |
 | E05 | Installer (Linux / macOS) | Installs cleanly (pkg/AppImage/dmg or agreed form); uninstall/docs OK | [P] | tip: `packaging/linux/build-deb.sh` (.deb Depends libmpv2) + `packaging/macos/build-app.sh` (.app+.dmg); `release.yml` ubuntu+macos artifact jobs. Install E2E **not** smoked on box |
 | E06 | First launch UI language | All visible chrome **English** | [B] | box: no interactive GUI/music smoke this pass (not invented) |
 | E07 | CLI open files / folders / playlist.json | Queue replaced; playback starts | [B] | CLI/playlist open not smoked without fixtures+GUI |
@@ -165,7 +165,7 @@ Recovery observed? (watchdog / OS restart / none):
 | ID | Check | Expected | Result | Notes |
 |----|-------|----------|--------|-------|
 | R01 | CI | At least `cargo test` + `cargo check` on PR/main | [P] | tip @899eefa Actions run#17 **green** (Win cargo test + release). ci.yml still **Windows-only** (no Linux job on PR/push). release.yml has Win/Linux/mac packaging matrix on tag/`workflow_dispatch`. Prior: run#14 (PR#6) success; run#12 (PR#4 ENUM) success (superseded tip) |
-| R02 | Packaging / installer artifact | CI or release job produces installable build | [P] | tip `dff56fd8` run#40999425598: `pfd-*` Win/Linux/mac uploaded. Win install E2E **[P]** (Timothy). Timothy approved **publish** (via 旺財 2026-10-30) — Attach Release pending 曲街. |
+| R02 | Packaging / installer artifact | CI or release job produces installable build | [P] | **Published** [v0.1.0](https://github.com/TimothyLam1017/PFD/releases/tag/v0.1.0) @`dff56fd8` attach run#41001211500 **success** — 6 assets: `PFD-setup-0.1.0.exe`, `PFD.exe`, `pfd_0.1.0_amd64.deb`, `pfd-linux-amd64`, `PFD-0.1.0-macos.dmg`, `pfd-macos`. Naming **PFD**/`pfd-*` only. |
 | R03 | `restart_process` spawn failure | Must **not** exit hard leaving screen dark if child `spawn` fails — log + safe fallback (stay alive or retry) | [P] | try_restart_process keeps alive on spawn fail; unit tests pass on Linux box |
 | R04 | Single instance | Second launch focuses / hands off to existing PFD; no duplicate fullscreen stacks | [B] | Win mutex code present; tip Win CI **compiles** (run#17 green). Second instance exits (no focus handoff) still open; Linux no-op |
 | R05 | Triple-restart behaviour | Document + verify: watchdog self-restart, OS `RegisterApplicationRestart`, memory-limit restart — each continues queue/FS correctly; no restart storm | [B] | README+code paths for watchdog/OS restart/memory; E2E not verified on box |
@@ -181,7 +181,7 @@ Recovery observed? (watchdog / OS restart / none):
 | H01 | Esc exits fullscreen | Must **not** — `[F]` if it does | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29); Esc does **not** exit fullscreen |
 | H02 | UI not English (primary chrome) | `[F]` | [B] | box: no interactive GUI/music smoke this pass (not invented) |
 | H03 | Crash with no recovery and no actionable log | `[F]` | [B] | needs crash+log packet |
-| H04 | Installer missing on agreed ship platform | `[F]` or `[B]` until shipped | [P] | tip `dff56fd8` `pfd-*` artifacts present; Win install E2E **[P]** (Timothy). Unsigned; Linux/mac E2E open. Publish approved (Timothy). |
+| H04 | Installer missing on agreed ship platform | `[F]` or `[B]` until shipped | [P] | **v0.1.0** shipped (setup/deb/dmg + bins); Win install E2E **[P]** (Timothy). Unsigned; Linux/mac install E2E open. |
 
 ---
 
@@ -231,3 +231,4 @@ Linux/mac: E02/E03 + M*; L01/L02 backend wired — need interactive play smoke +
 | 2026-10-30 | v1.5.5 local：PR #8 merged main `dff56fd8`（PFD 改名＋Continue B）。E01 CI run#24 in_progress；E04 靜態 iss/yml **[P]**、等 Release dispatch＋Timothy Win11 E2E；A03 靜態 start_up **[P]**、等 Win11 Options E2E。**do not push** without Timothy via 旺財。 |
 | 2026-10-30 | v1.5.6 local：Release packages run#40999425598 @`dff56fd8` **success** — E04/R02 artifact 名 **[P]**（`pfd-windows`→`PFD-setup-0.1.0.exe`+`PFD.exe`；linux/mac 亦 pfd/PFD）。A03 靜態仍 [B] 等 Win11；E04 install E2E（Start Menu PFD）等 Timothy。**do not push** without Timothy via 旺財。 |
 | 2026-10-30 | v1.5.7：Timothy Win11（via 旺財）E04 名＋install／Start Menu **PFD**／uninstall **[P]**；A03＝B（獨立＋ON/OFF）**[P]**；E01 CI run#24 test+release **[P]**。Timothy **已批 publish**。**Timothy via 旺財 approved push.** |
+| 2026-10-30 | v1.5.8：Release **v0.1.0** published；attach run#41001211500 **success**；六資產齊（setup／exe／deb／linux／dmg／macos），命名 **PFD**/`pfd-*`。E04/R02/H04 notes 記 release。**Timothy via 旺財 approved push.** |
