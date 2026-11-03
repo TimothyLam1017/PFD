@@ -1,0 +1,58 @@
+name: materialize-pfd-icons
+
+# One-shot: decode ASCII base64 staging into real PNG/ICO/ICNS on feat/app-icon.
+# GitHub MCP push_files cannot upload binary blobs without UTF-8 corruption.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feat/app-icon
+        uses: actions/checkout@v4
+        with:
+          ref: feat/app-icon
+
+      - name: Decode staging base64 into assets/
+        run: |
+          python3 <<'PY'
+          import base64, json, os
+          from pathlib import Path
+          staging = Path("assets/.icon-staging")
+          manifest = json.loads((staging / "manifest.json").read_text())
+          for entry in manifest:
+              dest = Path(entry["dest"])
+              dest.parent.mkdir(parents=True, exist_ok=True)
+              raw = base64.b64decode((staging / entry["b64"]).read_text().strip())
+              dest.write_bytes(raw)
+              assert len(raw) == entry["bytes"], (entry["dest"], len(raw), entry["bytes"])
+              print(f"wrote {dest} ({len(raw)} bytes)")
+          PY
+
+      - name: Commit binaries and remove staging + this workflow
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/pfd-source.png assets/pfd-icon.png assets/pfd.png assets/pfd.ico assets/pfd.icns assets/linux
+          git rm -r --ignore-unmatch assets/.icon-staging
+          git rm --ignore-unmatch .github/workflows/materialize-pfd-icons.yml
+          # Also drop binary-upload probes if present
+          git rm --ignore-unmatch assets/_probe_tiny.png assets/_probe_tiny2.png || true
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+            exit 0
+          fi
+          git commit -m "$(cat <<'EOF'
+          feat: materialize PFD app icon binaries (png/ico/icns)
+
+          Decode assets/.icon-staging base64 into real icon files for
+          Windows Inno, Linux .deb, and macOS .app packaging. Remove
+          staging and this one-shot workflow.
+          EOF
+          )"
+          git push origin HEAD:feat/app-icon
