@@ -5,10 +5,10 @@
 #define MyAppName "PFD"
 #define MyAppExeName "PFD.exe"
 #ifndef MyAppVersion
-  #define MyAppVersion "0.1.0"
+  #define MyAppVersion "0.1.1"
 #endif
 #ifndef DistDir
-  #define DistDir "..\..\dist\windows"
+  #define DistDir "..\\..\\dist\\windows"
 #endif
 
 [Setup]
