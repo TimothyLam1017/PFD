@@ -1,0 +1,67 @@
+[
+  {
+    "b64": "assets__pfd-source.png.b64",
+    "dest": "assets/pfd-source.png",
+    "bytes": 21148
+  },
+  {
+    "b64": "assets__pfd-icon.png.b64",
+    "dest": "assets/pfd-icon.png",
+    "bytes": 14359
+  },
+  {
+    "b64": "assets__pfd.png.b64",
+    "dest": "assets/pfd.png",
+    "bytes": 34540
+  },
+  {
+    "b64": "assets__pfd.ico.b64",
+    "dest": "assets/pfd.ico",
+    "bytes": 24141
+  },
+  {
+    "b64": "assets__pfd.icns.b64",
+    "dest": "assets/pfd.icns",
+    "bytes": 170716
+  },
+  {
+    "b64": "assets__linux__pfd-16.png.b64",
+    "dest": "assets/linux/pfd-16.png",
+    "bytes": 410
+  },
+  {
+    "b64": "assets__linux__pfd-24.png.b64",
+    "dest": "assets/linux/pfd-24.png",
+    "bytes": 650
+  },
+  {
+    "b64": "assets__linux__pfd-32.png.b64",
+    "dest": "assets/linux/pfd-32.png",
+    "bytes": 911
+  },
+  {
+    "b64": "assets__linux__pfd-48.png.b64",
+    "dest": "assets/linux/pfd-48.png",
+    "bytes": 1550
+  },
+  {
+    "b64": "assets__linux__pfd-64.png.b64",
+    "dest": "assets/linux/pfd-64.png",
+    "bytes": 2205
+  },
+  {
+    "b64": "assets__linux__pfd-128.png.b64",
+    "dest": "assets/linux/pfd-128.png",
+    "bytes": 5571
+  },
+  {
+    "b64": "assets__linux__pfd-256.png.b64",
+    "dest": "assets/linux/pfd-256.png",
+    "bytes": 12726
+  },
+  {
+    "b64": "assets__linux__pfd-512.png.b64",
+    "dest": "assets/linux/pfd-512.png",
+    "bytes": 34540
+  }
+]
