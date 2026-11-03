@@ -25,9 +25,24 @@ rm -rf "$DEB_DIR"
 mkdir -p "$DEB_DIR/DEBIAN" \
          "$DEB_DIR/usr/bin" \
          "$DEB_DIR/usr/share/applications" \
+         "$DEB_DIR/usr/share/pixmaps" \
          "$DEB_DIR/usr/share/doc/$PKG_NAME"
 
 install -m 755 "$BIN" "$DEB_DIR/usr/bin/pfd"
+
+# App icon (PFD naming only — white play-in-circle on transparent)
+ICON_SRC="$ROOT/assets/pfd.png"
+ICON_DIR_SRC="$ROOT/assets/linux"
+if [[ -f "$ICON_SRC" ]]; then
+  install -m 644 "$ICON_SRC" "$DEB_DIR/usr/share/pixmaps/pfd.png"
+  for sz in 16 24 32 48 64 128 256 512; do
+    src="$ICON_DIR_SRC/pfd-${sz}.png"
+    if [[ -f "$src" ]]; then
+      mkdir -p "$DEB_DIR/usr/share/icons/hicolor/${sz}x${sz}/apps"
+      install -m 644 "$src" "$DEB_DIR/usr/share/icons/hicolor/${sz}x${sz}/apps/pfd.png"
+    fi
+  done
+fi
 
 cat > "$DEB_DIR/DEBIAN/control" <<CTRL
 Package: ${PKG_NAME}
@@ -48,6 +63,7 @@ Type=Application
 Name=PFD
 Comment=Lightweight music and video player
 Exec=pfd %F
+Icon=pfd
 Terminal=false
 Categories=AudioVideo;Player;Audio;Video;
 MimeType=audio/mpeg;audio/flac;audio/x-wav;audio/mp4;video/mp4;video/x-matroska;video/webm;

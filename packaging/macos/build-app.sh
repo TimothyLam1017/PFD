@@ -24,6 +24,12 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 install -m 755 "$BIN" "$APP/Contents/MacOS/pfd"
 
+# App icon (PFD naming — assets/pfd.icns)
+ICNS="$ROOT/assets/pfd.icns"
+if [[ -f "$ICNS" ]]; then
+  install -m 644 "$ICNS" "$APP/Contents/Resources/pfd.icns"
+fi
+
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -35,6 +41,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleVersion</key><string>${VERSION}</string>
   <key>CFBundleShortVersionString</key><string>${VERSION}</string>
   <key>CFBundleExecutable</key><string>pfd</string>
+  <key>CFBundleIconFile</key><string>pfd</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>LSMinimumSystemVersion</key><string>11.0</string>
   <key>NSHighResolutionCapable</key><true/>

@@ -72,6 +72,22 @@ Windows, install the matching free/paid **Video Extensions** from the Microsoft 
 and the Video formats bullet. Linux/macOS codecs come from the system ffmpeg/libmpv
 build (`brew install mpv` / distro `libmpv2`).
 
+
+## App icon
+
+Source art (Timothy): white rounded circle + play triangle. Files under `assets/`:
+
+| File | Use |
+|------|-----|
+| `assets/pfd-source.png` | Exact original export (indexed; near-black plate) |
+| `assets/pfd-icon.png` | Same art with real alpha (white on transparent) |
+| `assets/pfd.png` | 512×512 PNG master (Linux pixmaps / general) |
+| `assets/linux/pfd-*.png` | hicolor theme sizes 16…512 for the `.deb` |
+| `assets/pfd.ico` | Windows Inno (`SetupIconFile` + installed shortcut icon) |
+| `assets/pfd.icns` | macOS `PFD.app/Contents/Resources/pfd.icns` |
+
+Packaging scripts wire these in (`pfd.iss`, `build-deb.sh`, `build-app.sh`). Transparency is preserved in PNG/ICO/ICNS; the source file had no `tRNS` chunk so alpha was derived from the dark plate (not a redesign). No `audio-player` paths.
+
 ## Gaps / known limits
 
 * Installers are **unsigned** (Windows SmartScreen / macOS Gatekeeper may warn).
