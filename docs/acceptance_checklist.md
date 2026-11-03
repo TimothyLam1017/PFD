@@ -2,7 +2,7 @@
 
 **Product name:** **PFD** (*Player for dummies*)  
 **Code / crate / exe / Start Menu / packaging / artifacts:** Timothy 2026-10-30 → unify to **PFD** (no `audio-player` on release packages／installer／exe／Start Menu). 曲街 implementing; re-verify after merge. · repo https://github.com/TimothyLam1017/PFD  
-**Baseline tip:** `dff56fd8` (2026-10-30 HKT; main after PR #8 fix-pfd-naming-and-continue; PFD rename + Continue B)
+**Baseline tip:** `bdb464b4` (2026-11-03 HKT; main after PR #9 Clear playlist; includes PFD rename + Continue B @`dff56fd8`)
 **Scope (Timothy):** everyday **music player** + **unattended video screen** (both)  
 **UI language:** English only (menus, errors, dialogs)  
 **Owner:** 曲質 (QA) · **Dev:** 曲街 · **UX:** 曲介  
@@ -33,7 +33,7 @@
 
 | ID | Check | Expected | Result | Notes |
 |----|-------|----------|--------|-------|
-| E01 | `cargo build --release` on Windows | Produces `PFD.exe` / crate `pfd`; size ≤50 MB | [P] | tip `dff56fd8` CI run#24 https://github.com/TimothyLam1017/PFD/actions/runs/40999355806：`cargo test` + `cargo build --release` **success** (post steps still finishing). Crate/exe `pfd`/`PFD.exe`. |
+| E01 | `cargo build --release` on Windows | Produces `PFD.exe` / crate `pfd`; size ≤50 MB | [P] | tip `bdb464b4` CI run#28 https://github.com/TimothyLam1017/PFD/actions/runs/41584109479 **success** (test+release). Prior tip `dff56fd8` run#24 also [P]. Crate/exe `pfd`/`PFD.exe`. |
 | E02 | `cargo build --release` on Linux | Binary builds; ALSA deps documented | [P] | Prior box [P] ~12.5 MiB (pre-libmpv). Tip `video-mpv` is dynload (no link-time libmpv). Tip re-verify on box blocked (apt mirror/pkg-config). release.yml Linux job installs libasound2-dev+libmpv. README ALSA+libmpv docs OK |
 | E03 | `cargo build --release` on macOS | Binary builds | [B] | no macOS runner on this box |
 | E04 | **Installer** (Windows) | Installs as **PFD**; Start Menu **PFD**; uninstall clean; artifact/setup/exe names **PFD***/`pfd-*` (not audio-player) | [P] | tip `dff56fd8` Win11 install E2E **[P]** (via 旺財). **Published** [v0.1.0](https://github.com/TimothyLam1017/PFD/releases/tag/v0.1.0) attach run#41001211500 **success**：`PFD-setup-0.1.0.exe` (~4.6 MiB) + `PFD.exe` (~8.4 MiB); no `audio-player*`. |
@@ -61,6 +61,7 @@
 | M11 | CJK titles | Render (system CJK font or `font_path`) | [B] | box: no interactive GUI/music smoke this pass (not invented) |
 | M12 | Restore session | Volume, repeat, queue, last playlist restored | [B] | box: no interactive GUI/music smoke this pass (not invented) |
 | M13 | Shortcuts (window) | Space, arrows, Ctrl+arrows, M, Ctrl+N/O/S per README | [B] | box: no interactive GUI/music smoke this pass (not invented) |
+| M14 | Clear playlist (row context menu) | Empties **all** queue items; **stops** playback; marks dirty so empty queue **persists**; **does not** delete media files on disk | [B]* | tip `bdb464b4` PR #9 static **[P]**：`Action::ClearPlaylist` → `eng.clear()`=`set_tracks([])`→`stop()`；`dirty=true`→`save_queue`；無 delete file。CI run#28 **success**. Interactive Win11 E2E pending Timothy via 旺財. |
 
 ---
 
@@ -232,3 +233,4 @@ Linux/mac: E02/E03 + M*; L01/L02 backend wired — need interactive play smoke +
 | 2026-10-30 | v1.5.6 local：Release packages run#40999425598 @`dff56fd8` **success** — E04/R02 artifact 名 **[P]**（`pfd-windows`→`PFD-setup-0.1.0.exe`+`PFD.exe`；linux/mac 亦 pfd/PFD）。A03 靜態仍 [B] 等 Win11；E04 install E2E（Start Menu PFD）等 Timothy。**do not push** without Timothy via 旺財。 |
 | 2026-10-30 | v1.5.7：Timothy Win11（via 旺財）E04 名＋install／Start Menu **PFD**／uninstall **[P]**；A03＝B（獨立＋ON/OFF）**[P]**；E01 CI run#24 test+release **[P]**。Timothy **已批 publish**。**Timothy via 旺財 approved push.** |
 | 2026-10-30 | v1.5.8：Release **v0.1.0** published；attach run#41001211500 **success**；六資產齊（setup／exe／deb／linux／dmg／macos），命名 **PFD**/`pfd-*`。E04/R02/H04 notes 記 release。**Timothy via 旺財 approved push.** |
+| 2026-11-03 | v1.5.9：Baseline → `bdb464b4` (PR #9 Clear playlist)。新增 M14；靜態 clear→stop＋dirty persist＋無刪檔 **[P]**；CI run#28 **success**。Win11 E2E 仍 [B]（之後補）。**Timothy via 旺財 approved push.** |
