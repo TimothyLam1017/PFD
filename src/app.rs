@@ -57,6 +57,7 @@ enum Action {
     SelectDelta(isize),
     Remove(usize),
     RemoveSelected,
+    ClearPlaylist,
     Move(usize, usize),
     MoveSelected(isize),
     CopyPath(usize),
@@ -471,6 +472,16 @@ impl AudioPlayerApp {
                 self.playlist_path = None;
                 self.dirty = false;
                 self.info("New playlist");
+            }
+            Action::ClearPlaylist => {
+                let mut eng = lock(&self.engine);
+                if eng.tracks().is_empty() {
+                    return;
+                }
+                eng.clear();
+                drop(eng);
+                self.selected = None;
+                self.dirty = true;
             }
             Action::Quit => ctx.send_viewport_cmd(egui::ViewportCommand::Close),
             Action::Select(i) => self.selected = Some(i),
@@ -1202,6 +1213,13 @@ impl AudioPlayerApp {
                         ui.separator();
                         if ui.button("Remove from playlist").clicked() {
                             actions.push(Action::Remove(i));
+                            ui.close_menu();
+                        }
+                        if ui
+                            .add_enabled(!tracks.is_empty(), egui::Button::new("Clear playlist"))
+                            .clicked()
+                        {
+                            actions.push(Action::ClearPlaylist);
                             ui.close_menu();
                         }
                     });
