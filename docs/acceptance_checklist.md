@@ -2,7 +2,7 @@
 
 **Product name:** **PFD** (*Player for dummies*)  
 **Code / crate / exe / Start Menu / packaging / artifacts:** Timothy 2026-10-30 → unify to **PFD** (no `audio-player` on release packages／installer／exe／Start Menu). 曲街 implementing; re-verify after merge. · repo https://github.com/TimothyLam1017/PFD  
-**Baseline tip:** `bdb464b4` (2026-11-03 HKT; main after PR #9 Clear playlist; includes PFD rename + Continue B @`dff56fd8`)
+**Baseline tip:** `dae785ff` (2026-11-05 HKT; main **v0.1.1** — Clear playlist + app icon; includes PR #9 @`bdb464b4` + PR #10; checklist prior `c08f59f`)
 **Scope (Timothy):** everyday **music player** + **unattended video screen** (both)  
 **UI language:** English only (menus, errors, dialogs)  
 **Owner:** 曲質 (QA) · **Dev:** 曲街 · **UX:** 曲介  
@@ -38,9 +38,9 @@
 | E03 | `cargo build --release` on macOS | Binary builds | [B] | no macOS runner on this box |
 | E04 | **Installer** (Windows) | Installs as **PFD**; Start Menu **PFD**; uninstall clean; artifact/setup/exe names **PFD***/`pfd-*` (not audio-player) | [P] | tip `dff56fd8` Win11 install E2E **[P]** (via 旺財). **Published** [v0.1.0](https://github.com/TimothyLam1017/PFD/releases/tag/v0.1.0) attach run#41001211500 **success**：`PFD-setup-0.1.0.exe` (~4.6 MiB) + `PFD.exe` (~8.4 MiB); no `audio-player*`. |
 | E05 | Installer (Linux / macOS) | Installs cleanly (pkg/AppImage/dmg or agreed form); uninstall/docs OK | [P] | tip: `packaging/linux/build-deb.sh` (.deb Depends libmpv2) + `packaging/macos/build-app.sh` (.app+.dmg); `release.yml` ubuntu+macos artifact jobs. Install E2E **not** smoked on box |
-| E06 | First launch UI language | All visible chrome **English** | [B] | box: no interactive GUI/music smoke this pass (not invented) |
-| E07 | CLI open files / folders / playlist.json | Queue replaced; playback starts | [B] | CLI/playlist open not smoked without fixtures+GUI |
-| E08 | Config dir created | `%APPDATA%\audio-player\` (Win) / platform `dirs::config_dir` | [B] | code: dirs::config_dir()/audio-player; first-launch not smoked on box |
+| E06 | First launch UI language | All visible chrome **English** | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
+| E07 | CLI open files / folders / playlist.json | Queue replaced; playback starts | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
+| E08 | Config dir created | `%APPDATA%\audio-player\` (Win) / platform `dirs::config_dir` | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05); config dir `%APPDATA%\audio-player` (crate path still audio-player) |
 
 ---
 
@@ -56,12 +56,12 @@
 | M06 | Formats: mp3, flac, wav, m4a/aac, ogg | Each plays without crash | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | M07 | Missing / unreadable file | Red ⚠; auto-skipped; queue continues | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | M08 | Playlist JSON load/save | BOM OK; relative paths; non-ASCII preserved | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
-| M09 | Folder add / DnD / reorder / delete | Queue updates; persisted | [B] | box: no interactive GUI/music smoke this pass (not invented) |
-| M10 | Tags fill title/artist/duration in background | Empty fields fill; playlist values win | [B] | box: no interactive GUI/music smoke this pass (not invented) |
-| M11 | CJK titles | Render (system CJK font or `font_path`) | [B] | box: no interactive GUI/music smoke this pass (not invented) |
-| M12 | Restore session | Volume, repeat, queue, last playlist restored | [B] | box: no interactive GUI/music smoke this pass (not invented) |
-| M13 | Shortcuts (window) | Space, arrows, Ctrl+arrows, M, Ctrl+N/O/S per README | [B] | box: no interactive GUI/music smoke this pass (not invented) |
-| M14 | Clear playlist (row context menu) | Empties **all** queue items; **stops** playback; marks dirty so empty queue **persists**; **does not** delete media files on disk | [B]* | tip `bdb464b4` PR #9 static **[P]**：`Action::ClearPlaylist` → `eng.clear()`=`set_tracks([])`→`stop()`；`dirty=true`→`save_queue`；無 delete file。CI run#28 **success**. Interactive Win11 E2E pending Timothy via 旺財. |
+| M09 | Folder add / DnD / reorder / delete | Queue updates; persisted | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
+| M10 | Tags fill title/artist/duration in background | Empty fields fill; playlist values win | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
+| M11 | CJK titles | Render (system CJK font or `font_path`) | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
+| M12 | Restore session | Volume, repeat, queue, last playlist restored | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
+| M13 | Shortcuts (window) | Space, arrows, Ctrl+arrows, M, Ctrl+N/O/S per README | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
+| M14 | Clear playlist (row context menu) | Empties **all** queue items; **stops** playback; marks dirty so empty queue **persists**; **does not** delete media files on disk | [P] | tip `dae785ff`／v0.1.1：靜態 clear→stop＋dirty persist＋無刪檔 **[P]**；CI run#28 **success** @`bdb464b4`。**Timothy Win11 interactive E2E [P]** (via 旺財 2026-11-05)。 |
 
 ---
 
@@ -72,12 +72,12 @@
 | V01 | H.264 mp4 in window | Picture above playlist; audio sync OK | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | V02 | Hide playlist under video | Video fills player window | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | V03 | Fit / Fill / Stretch | Applies in window + fullscreen; per-entry `fit` overrides | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
-| V04 | Non-square pixels | Display aspect corrected (DVD-style) | [B] | Win-only — Timothy Win11 smoke |
+| V04 | Non-square pixels | Display aspect corrected (DVD-style) | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
 | V05 | Gapless next video | No long black gap between items / loop to first | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
-| V06 | Mixed audio+video playlist | Advances correctly across types | [B] | Win-only — Timothy Win11 smoke |
-| V07 | Unsupported / no-picture file | Skip after ~20 s no picture; clear handling | [B] | Win-only — Timothy Win11 smoke |
+| V06 | Mixed audio+video playlist | Advances correctly across types | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
+| V07 | Unsupported / no-picture file | Skip after ~20 s no picture; clear handling | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
 | V08 | HEVC / VP9 / AV1 | With Store extensions: play; without: **clear error + install guide** | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
-| V09 | `video_probe` example | Builds; writes `video-probe.log` with format/size/FPS notes | [B] | Win-only — Timothy Win11 smoke; tip `examples/video_probe.rs` not fetched to box (MCP size); Win example |
+| V09 | `video_probe` example | Builds; writes `video-probe.log` with format/size/FPS notes | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
 
 ---
 
@@ -98,11 +98,11 @@
 |----|-------|----------|--------|-------|
 | F01 | Enter fullscreen (F / menu / double-click) | Picture only: no chrome, timeline, subtitles, cursor | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | F02 | Topmost + re-assert ~2 s | Stays above normal apps | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
-| F03 | High priority + no sleep/dim/screensaver | Display stays on during show | [B] | Win-only — Timothy Win11 smoke |
+| F03 | High priority + no sleep/dim/screensaver | Display stays on during show | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
 | F04 | **Exit only by double-click on video** | Esc / stray keys do **not** exit | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29); hard req — exit only double-click |
 | F05 | Silent keys in fullscreen | Space, ←/→, Ctrl+←/→, P/N, media keys work | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | F06 | Monitor picker | Fullscreen on chosen monitor | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
-| F07 | Lobby shortcut | `pfd.exe` (or ship exe name) `--fullscreen --repeat all playlist.json` | [B] | Win-only — Timothy Win11 smoke; exe name → **PFD** after rename |
+| F07 | Lobby shortcut | `pfd.exe` (or ship exe name) `--fullscreen --repeat all playlist.json` | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05); lobby `PFD.exe --fullscreen --repeat all playlist.json` |
 
 ---
 
@@ -113,9 +113,9 @@
 | A01 | Options → Start with Windows | HKCU Run written; no admin | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | A02 | Autostart after sign-in | Opens fullscreen; loops last playlist | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
 | A03 | Continue from last item | Independent Options checkbox; **not** bound to Start with Windows. **Behaviour B**: toggle ON → **normal launch** resumes last item; OFF → no auto-play from last on normal open | [P] | tip `dff56fd8` static + **Timothy Win11 (via 旺財 2026-10-30) [P]**: Continue independent; ON＝B normal open resumes last; OFF OK. |
-| A04 | Wait for devices (~90 s) | Survives slow disk/audio/display ready | [B] | Win-only — Timothy Win11 smoke |
-| A05 | Queue saved on change | Power cut does not empty show list | [B] | Win-only — Timothy Win11 smoke |
-| A06 | OS checklist (manual) | Autologon / DND / Active hours / codec extensions documented | [B] | Win-only — Timothy Win11 smoke OS settings documented in README |
+| A04 | Wait for devices (~90 s) | Survives slow disk/audio/display ready | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
+| A05 | Queue saved on change | Power cut does not empty show list | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
+| A06 | OS checklist (manual) | Autologon / DND / Active hours / codec extensions documented | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
 
 ---
 
@@ -124,11 +124,11 @@
 | ID | Check | Expected | Result | Notes |
 |----|-------|----------|--------|-------|
 | S01 | Decoder hang ~20–25 s | Watchdog restarts process; continues next item; fullscreen restored if was FS | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
-| S02 | `RegisterApplicationRestart` | After ≥60 s run, OS relaunch continues queue | [B] | Win-only — Timothy Win11 smoke |
+| S02 | `RegisterApplicationRestart` | After ≥60 s run, OS relaunch continues queue | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
 | S03 | `memory_limit_mb` (default 1500) | Restart at next item; force within ~60 s if no boundary | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29) |
-| S04 | Display mode change | Fullscreen window recreated to new mode | [B] | Win-only — Timothy Win11 smoke |
-| S05 | Recovery **fails** (no restart / stuck black / wrong index) | `[F]` + repro | [B] | Win-only — Timothy Win11 smoke |
-| S06 | Minimized / covered window | Auto-advance still works (watcher thread) | [B] | Win-only — Timothy Win11 smoke |
+| S04 | Display mode change | Fullscreen window recreated to new mode | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
+| S05 | Recovery **fails** (no restart / stuck black / wrong index) | `[F]` + repro | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05); no unrecovered hang/crash observed this pass |
+| S06 | Minimized / covered window | Auto-advance still works (watcher thread) | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05) |
 
 ---
 
@@ -180,7 +180,7 @@ Recovery observed? (watchdog / OS restart / none):
 | ID | Check | Expected | Result | Notes |
 |----|-------|----------|--------|-------|
 | H01 | Esc exits fullscreen | Must **not** — `[F]` if it does | [P] | Timothy Win11 smoke @899eefa **[P]** (via 旺財 2026-10-29); Esc does **not** exit fullscreen |
-| H02 | UI not English (primary chrome) | `[F]` | [B] | box: no interactive GUI/music smoke this pass (not invented) |
+| H02 | UI not English (primary chrome) | `[F]` | [P] | Timothy Win11 acceptance @`dae785ff`／v0.1.1 **[P]** (via 旺財 2026-11-05); primary chrome English |
 | H03 | Crash with no recovery and no actionable log | `[F]` | [B] | needs crash+log packet |
 | H04 | Installer missing on agreed ship platform | `[F]` or `[B]` until shipped | [P] | **v0.1.0** shipped (setup/deb/dmg + bins); Win install E2E **[P]** (Timothy). Unsigned; Linux/mac install E2E open. |
 
@@ -234,3 +234,4 @@ Linux/mac: E02/E03 + M*; L01/L02 backend wired — need interactive play smoke +
 | 2026-10-30 | v1.5.7：Timothy Win11（via 旺財）E04 名＋install／Start Menu **PFD**／uninstall **[P]**；A03＝B（獨立＋ON/OFF）**[P]**；E01 CI run#24 test+release **[P]**。Timothy **已批 publish**。**Timothy via 旺財 approved push.** |
 | 2026-10-30 | v1.5.8：Release **v0.1.0** published；attach run#41001211500 **success**；六資產齊（setup／exe／deb／linux／dmg／macos），命名 **PFD**/`pfd-*`。E04/R02/H04 notes 記 release。**Timothy via 旺財 approved push.** |
 | 2026-11-03 | v1.5.9：Baseline → `bdb464b4` (PR #9 Clear playlist)。新增 M14；靜態 clear→stop＋dirty persist＋無刪檔 **[P]**；CI run#28 **success**。Win11 E2E 仍 [B]（之後補）。**Timothy via 旺財 approved push.** |
+| 2026-11-05 | v1.5.10：Baseline → `dae785ff`（**v0.1.1** Clear playlist + app icon）。Timothy Win11 acceptance 全 pass（via 旺財）：**M14** Clear playlist interactive E2E **[P]**；一併標 [P]：E06–E08、M09–M13、V04/V06/V07/V09、F03/F07、A04–A06、S02/S04–S06、H02。仍 [B]：E03 macOS build、L01–L03 Linux/mac video smoke、D02/D03、R04 single-instance handoff、R05 triple-restart E2E、H03 crash packet。**Timothy via 旺財 approved push.** |
